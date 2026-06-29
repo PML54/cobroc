@@ -1,0 +1,19 @@
+# Environnement Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Config locale (contient la clé API)
+.env
+
+# Base SQLite : versionnée dans le monorepo (source de vérité de listHistoric).
+# Seuls les backups horodatés sont ignorés.
+db/*.backup-*.db
+
+# macOS
+.DS_Store
+
+# IDE JetBrains
+.idea/
