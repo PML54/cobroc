@@ -1,4 +1,5 @@
 # cobroc-server
+<!-- Dernière modification : 2026-06-29 -->
 
 Serveur REST local pour la base **historibroc** — historique des visites de brocantes de PML et FRA.  
 Objectif principal : partager et modifier la base depuis n'importe quelle machine du réseau local.
@@ -37,6 +38,7 @@ Swagger UI : `http://192.168.1.11:8765/docs`
 ```
 server.py                           # Application FastAPI — toutes les routes
 static/index.html                   # Appli web de saisie d'une visite (servie sur / et /static)
+static/lieux.html                   # Appli web de gestion des lieux (liste, recherche, création, édition)
 agent/validator.py                  # Agent Claude Haiku : valide chaque entrée avant insertion
 db/schema.sql                       # DDL SQLite (tables lieux + historic + index)
 db/historibroc.db                   # Base SQLite (~2237 entrées + 672 lieux)
@@ -127,16 +129,32 @@ Les tris `date_desc` et `date_asc` incluent un **tri secondaire par ville** (`hi
 
 Formulaire « Nouvelle visite » servi sur `/` (redirige vers `/static/index.html`). Page HTML/CSS/JS autonome, sans build.
 
-- **En-tête** : sélecteur d'année (2020 → année courante) + bouton 🕐. Pas de titre de page.
+> **Séparation lieu / visite** : la création d'un lieu est **dissociée** de la saisie d'une visite.
+> `index.html` ne fait que **sélectionner** un lieu existant (`lieu_id` obligatoire, plus de saisie libre) ;
+> toute création ou modification de lieu passe par `lieux.html`.
+
+- **En-tête** : sélecteur d'année (2020 → année courante) + bouton 📍 (page Lieux) + bouton 🕐. Pas de titre de page.
 - **Icône 🕐** : charge `GET /historic?sort=date_desc&year=<annee>&limit=500` — toutes les visites de l'année sélectionnée, triées par date desc puis ville. Chaque ligne : date · visiteur · ville · lieu · nb exposants · étoiles · commentaire tronqué. Clic → mode édition (`PUT /historic/{id}`). C'est le **seul point d'entrée** pour modifier une visite.
 - **Formulaire** : une ligne Date · Heure · Ordre (stepper − n +) · Note (étoiles). Pas de titres de section.
 - **Visiteur** : bascule PML / FRA.
 - **Lieu** : Ville | Adresse sur une ligne, CP | Nb exposants sur la suivante. Puis **Conditions** (Pluie, Arrivée trop tard) et **Endroit** (Parking / Champ / Stade / Place / Rues, 3 colonnes).
 - **Endroit** : stocké dans `historic` (`endroit_*`), pas dans `lieux`.
-- **Nouveau lieu** : modale dédiée → `POST /lieux` puis auto-sélection.
+- **Lieu obligatoire** : le champ Ville est un **pur sélecteur** alimenté par `GET /lieux?ville=…`. Tant qu'aucun lieu n'est sélectionné (`selectedLieuId === null`), le bouton Enregistrer reste grisé. CP et Adresse sont en lecture seule, remplis depuis le lieu.
+- **Aucun résultat** : le dropdown affiche un lien « Créer le lieu → » vers `/static/lieux.html?ville=<VILLE>&new=1` (ouvre l'éditeur pré-rempli). Plus de modale de création dans `index.html`.
+- **Conséquence sur les anciennes visites** : une entrée à `lieu_id` NULL ne peut plus être réenregistrée sans lui associer un lieu — l'édition force donc le backfill de `lieu_id`.
 - **Détail des achats** : lignes description + prix, recomposées dans `hist_detail` au format `desc=prix€+…`.
 - Enregistrement silencieux (pas de bandeau succès). Les erreurs s'affichent en rouge.
 - **Contrainte d'unicité** : le triplet (hist_ville, hist_name, hist_date) doit être unique — les doublons sont à nettoyer manuellement via SQLite.
+
+## Appli web des lieux (`static/lieux.html`)
+
+Page autonome servie sur `/static/lieux.html`, même charte que `index.html`. Seul point d'entrée pour créer ou modifier un lieu.
+
+- **En-tête** : bouton ← (retour saisie visite), champ de recherche par ville (forcé en majuscules, debounce 250 ms), bouton ＋ (nouveau lieu).
+- **Liste** : toujours en **ordre alphabétique** (`sort=ville_asc&limit=1000`) — liste complète sans recherche (678 lieux à ce jour, sous la limite API de 1000), filtrée par début de ville sinon. Une ligne = ville · CP · nom · adresse · nb visites. Clic → éditeur pré-rempli.
+- **Éditeur** : même carte pour création (`POST /lieux`) et modification (`PUT /lieux/{id}`), distinguées par `editingId`. Champs : Ville + CP (obligatoires), Adresse, Nom, Récurrence, Endroit (parking / rues / stade / espace — champs de la table `lieux`, distincts des `endroit_*` de `historic`).
+- **Pas de suppression** dans l'UI — `DELETE /lieux/{id}` reste disponible via l'API.
+- **Paramètres d'URL** : `?ville=XXX` pré-remplit la recherche, `?new=1` ouvre directement l'éditeur en création.
 
 ## Variables d'environnement (`.env`)
 
@@ -227,3 +245,33 @@ ipconfig getifaddr en1   # Ethernet
 ```
 
 Exemple d'accès depuis un autre Mac : `http://192.168.1.X:8765/docs`
+
+## Dépannage
+
+### « Unexpected token 'I', "Internal S"… is not valid JSON »
+
+L'appli web reçoit une **500 Internal Server Error** (texte brut) au lieu de JSON. Causes fréquentes :
+
+1. **Clé API invalide / révoquée** → vérifier `server/.env`, puis redémarrer le serveur (la clé est lue au boot).
+2. **Mauvais process sur le port 8765** (ex. vieux serveur depuis un autre dossier) :
+   ```bash
+   lsof -nP -iTCP:8765 -sTCP:LISTEN   # PID + dossier de travail
+   lsof -p <PID> | grep cwd
+   kill <PID>                          # tuer, relancer depuis server/
+   ```
+3. **Tester la clé directement** :
+   ```bash
+   curl -s https://api.anthropic.com/v1/messages \
+     -H "x-api-key: $(grep ^ANTHROPIC_API_KEY= .env | cut -d= -f2-)" \
+     -H "anthropic-version: 2023-06-01" -H "content-type: application/json" \
+     -d '{"model":"claude-haiku-4-5-20251001","max_tokens":16,"messages":[{"role":"user","content":"ping"}]}'
+   ```
+4. Toujours lire le **traceback uvicorn** pour la cause exacte.
+
+### `sqlite3.ProgrammingError: Incorrect number of bindings`
+
+Désynchronisation entre les colonnes listées dans l'INSERT/UPDATE et les paramètres `:xxx`. Vérifier que tout nouveau champ est ajouté aux deux endroits dans `server.py`.
+
+### `address already in use` au démarrage
+
+launchd a relancé uvicorn automatiquement. Faire d'abord `launchctl unload` avant de lancer manuellement (voir START.md).

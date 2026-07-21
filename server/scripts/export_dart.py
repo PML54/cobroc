@@ -15,7 +15,13 @@ DEFAULT_OUT = Path(__file__).parent.parent.parent / "lib/historibroc.dart"
 
 
 def _escape(s: str) -> str:
-    return s.replace("\\", "\\\\").replace('"', '\\"')
+    return (s
+        .replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\r\n", " ")
+        .replace("\r", " ")
+        .replace("\n", " ")
+    )
 
 
 def _to_dmy(date_str: str) -> str:

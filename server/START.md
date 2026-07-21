@@ -1,4 +1,5 @@
 # cobroc-server — démarrage rapide
+<!-- Dernière modification : 2026-06-29 -->
 
 ## Service launchd (mode normal)
 

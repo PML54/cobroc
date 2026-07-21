@@ -220,19 +220,18 @@
     flex-shrink: 0;
   }
 
-  .new-city-row {
+  .no-lieu-row {
     padding: 10px 14px;
-    color: var(--primary);
+    color: var(--muted);
     font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 6px;
   }
-
-  .new-city-row:hover { background: #fdf5ee; }
+  .no-lieu-row a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .no-lieu-row a:hover { text-decoration: underline; }
 
   /* Stars */
   .stars {
@@ -405,77 +404,6 @@
   }
   input.ro:focus { border-color: var(--border); background: #efe9e1; }
 
-  /* Modale Nouveau lieu */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    display: none;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 24px 16px;
-    z-index: 1000;
-    overflow-y: auto;
-  }
-  .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: var(--card);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    padding: 20px;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-  }
-
-  .modal-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--primary-dark);
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .modal-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 20px;
-  }
-
-  .btn {
-    padding: 14px;
-    border-radius: var(--radius);
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    border: 2px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-  }
-  .btn-primary {
-    border-color: var(--primary);
-    background: var(--primary);
-    color: white;
-  }
-  .btn-primary:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
-
-  #nl_error {
-    display: none;
-    margin-top: 12px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    background: #fdedec;
-    color: var(--danger);
-    border: 1px solid #f5b7b1;
-    font-size: 0.88rem;
-    font-weight: 600;
-  }
-  #nl_error.show { display: block; }
-
   /* Groupes de cases à cocher (Endroit, Conditions) */
   .endroit-group, .cond-group {
     display: grid;
@@ -567,6 +495,10 @@
   .recent-btn:hover { background: #fdf5ee; }
   .recent-btn.active { background: #fdf5ee; border-color: var(--primary); }
 
+  /* Lien 📍 vers la page Lieux — même gabarit que .recent-btn */
+  a.recent-btn { text-decoration: none; display: inline-flex; align-items: center; }
+  a.recent-btn + .recent-btn { margin-left: 0; }
+
   #recentPanel {
     display: none;
     background: white;
@@ -615,6 +547,7 @@
 
 <div class="top-bar">
   <select id="yearSelect" class="year-select"></select>
+  <a class="recent-btn" id="lieuxBtn" href="/static/lieux.html" title="Gérer les lieux">📍</a>
   <button type="button" class="recent-btn" id="recentBtn" title="Visites de l'année">🕐</button>
 </div>
 
@@ -761,49 +694,6 @@
 
 </form>
 
-<!-- Modale : Nouveau lieu -->
-<div class="modal-overlay" id="lieuModal">
-  <div class="modal">
-    <div class="modal-title">📍 Nouveau lieu</div>
-
-    <label for="nlv">Ville</label>
-    <input type="text" id="nlv" name="nlv" autocomplete="off" autocapitalize="characters" spellcheck="false"
-           data-1p-ignore data-lpignore="true" readonly onfocus="this.removeAttribute('readonly')">
-
-    <label for="nlp">Code postal</label>
-    <input type="number" id="nlp" name="nlp" placeholder="95000" autocomplete="off"
-           data-1p-ignore data-lpignore="true" readonly onfocus="this.removeAttribute('readonly')">
-
-    <label for="nll">Adresse / lieu précis</label>
-    <input type="text" id="nll" name="nll" placeholder="Parking, stade, centre-ville…"
-           autocomplete="off" spellcheck="false" data-1p-ignore data-lpignore="true"
-           readonly onfocus="this.removeAttribute('readonly')">
-
-    <label for="nln">Nom (optionnel)</label>
-    <input type="text" id="nln" name="nln" placeholder="Brocante de…, Vide-grenier…" autocomplete="off"
-           data-1p-ignore data-lpignore="true" readonly onfocus="this.removeAttribute('readonly')">
-
-    <label for="nlr">Récurrence (optionnel)</label>
-    <input type="text" id="nlr" name="nlr" placeholder="mensuel, annuel, ponctuel…" autocomplete="off"
-           data-1p-ignore data-lpignore="true" readonly onfocus="this.removeAttribute('readonly')">
-
-    <label>Endroit</label>
-    <div class="endroit-group">
-      <label class="chk"><input type="checkbox" id="nl_parking"> Parking</label>
-      <label class="chk"><input type="checkbox" id="nl_rues"> Rues</label>
-      <label class="chk"><input type="checkbox" id="nl_stade"> Stade</label>
-      <label class="chk"><input type="checkbox" id="nl_espace"> Espace</label>
-    </div>
-
-    <div id="nl_error"></div>
-
-    <div class="modal-actions">
-      <button type="button" class="btn" id="nl_cancel">Annuler</button>
-      <button type="button" class="btn btn-primary" id="nl_create">Créer</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // ── State ──────────────────────────────────────────────────────────────────
 let selectedName = null;   // 'PML' | 'FRA'
@@ -922,9 +812,10 @@ setOrdre(1);
 
 // ── Triplet minimal : grise/dégrise le bouton Enregistrer ─────────────────
 function updateSubmitBtn() {
+  // Le lieu doit être un lieu existant : selectedLieuId non null (plus de saisie libre)
   const ok = !!selectedName
           && !!document.getElementById('hist_date').value
-          && !!(selectedLieuId || villeInput.value.trim());
+          && selectedLieuId !== null;
   const btn = document.getElementById('submitBtn');
   btn.disabled = !ok;
   btn.style.opacity = ok ? '' : '0.4';
@@ -1034,6 +925,17 @@ function renderDropdown(items, q) {
   dropFocused = -1;
   dropdown.innerHTML = '';
 
+  // Aucun résultat : renvoyer vers la page Lieux (la création y est désormais isolée)
+  if (!items.length) {
+    const none = document.createElement('div');
+    none.className = 'no-lieu-row';
+    none.innerHTML = `Aucun lieu « <strong>${escapeHtml(q.toUpperCase())}</strong> ».
+      <a href="/static/lieux.html?ville=${encodeURIComponent(q.toUpperCase())}&new=1">Créer le lieu →</a>`;
+    dropdown.appendChild(none);
+    dropdown.classList.add('open');
+    return;
+  }
+
   items.forEach((item, i) => {
     const div = document.createElement('div');
     div.className = 'dropdown-item';
@@ -1052,12 +954,6 @@ function renderDropdown(items, q) {
     div.addEventListener('click', () => selectDropItem(i));
     dropdown.appendChild(div);
   });
-
-  const newRow = document.createElement('div');
-  newRow.className = 'new-city-row';
-  newRow.innerHTML = `<span>＋</span> Nouveau lieu « <strong>${q.toUpperCase()}</strong> »`;
-  newRow.addEventListener('click', () => openLieuModal(q));
-  dropdown.appendChild(newRow);
 
   dropdown.classList.add('open');
 }
@@ -1100,89 +996,6 @@ function moveFocus(dir) {
 function closeDropdown() {
   dropdown.classList.remove('open');
   dropFocused = -1;
-}
-
-// ── Modale : Nouveau lieu ────────────────────────────────────────────────────
-const lieuModal = document.getElementById('lieuModal');
-
-function openLieuModal(prefillVille) {
-  closeDropdown();
-  document.getElementById('nlv').value      = (prefillVille || '').trim().toUpperCase();
-  document.getElementById('nlp').value         = '';
-  document.getElementById('nll').value    = '';
-  document.getElementById('nln').value        = '';
-  document.getElementById('nlr').value = '';
-  ['nl_parking','nl_rues','nl_stade','nl_espace'].forEach(
-    id => { document.getElementById(id).checked = false; }
-  );
-  hideLieuError();
-  lieuModal.classList.add('open');
-  document.getElementById('nlp').focus();
-}
-
-function closeLieuModal() {
-  lieuModal.classList.remove('open');
-}
-
-function showLieuError(msg) {
-  const el = document.getElementById('nl_error');
-  el.textContent = msg;
-  el.classList.add('show');
-}
-
-function hideLieuError() {
-  document.getElementById('nl_error').classList.remove('show');
-}
-
-document.getElementById('nl_cancel').addEventListener('click', closeLieuModal);
-lieuModal.addEventListener('click', e => { if (e.target === lieuModal) closeLieuModal(); });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && lieuModal.classList.contains('open')) closeLieuModal();
-});
-
-document.getElementById('nl_create').addEventListener('click', createLieu);
-
-async function createLieu() {
-  const ville      = document.getElementById('nlv').value.trim().toUpperCase();
-  const cp         = parseInt(document.getElementById('nlp').value) || 0;
-  const adresse    = document.getElementById('nll').value.trim();
-  const nom        = document.getElementById('nln').value.trim();
-  const recurrence = document.getElementById('nlr').value.trim();
-  const endroit = {
-    parking: document.getElementById('nl_parking').checked ? 1 : 0,
-    rues:    document.getElementById('nl_rues').checked    ? 1 : 0,
-    stade:   document.getElementById('nl_stade').checked   ? 1 : 0,
-    espace:  document.getElementById('nl_espace').checked  ? 1 : 0,
-  };
-
-  if (!ville) { showLieuError('La ville est obligatoire.'); return; }
-  if (!cp)    { showLieuError('Le code postal est obligatoire.'); return; }
-
-  const btn = document.getElementById('nl_create');
-  btn.disabled = true;
-  btn.textContent = 'Création…';
-  hideLieuError();
-
-  try {
-    const res = await fetch('/lieux', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nom, ville, code_postal: cp, adresse, recurrence, ...endroit }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      applyLieu(data);
-      closeLieuModal();
-      showFeedback('success', `✓ Lieu créé : ${data.ville}${data.adresse ? ' — ' + data.adresse : ''}`);
-    } else {
-      showLieuError(data.detail || 'Erreur lors de la création du lieu.');
-    }
-  } catch (err) {
-    showLieuError('Erreur réseau : ' + err.message);
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Créer';
 }
 
 // ── Détail des achats (description + prix distincts) ─────────────────────────
@@ -1315,16 +1128,21 @@ document.getElementById('mainForm').addEventListener('submit', async e => {
 });
 
 function validate() {
-  // Triplet obligatoire : Visiteur + Date + Ville
+  // Triplet obligatoire : Visiteur + Date + Lieu (lieu existant, sélectionné dans la liste)
   const missing = [];
   if (!selectedName)                                   missing.push('Visiteur');
   if (!document.getElementById('hist_date').value)     missing.push('Date');
-  const hasVille = selectedLieuId || villeInput.value.trim();
-  if (!hasVille)                                       missing.push('Ville');
+  if (selectedLieuId === null)                         missing.push('Lieu');
 
   if (missing.length) {
-    showFeedback('error', `Champ(s) obligatoire(s) manquant(s) : <b>${missing.join(', ')}</b>`);
-    if (missing.includes('Ville')) villeInput.focus();
+    let msg = `Champ(s) obligatoire(s) manquant(s) : <b>${missing.join(', ')}</b>`;
+    if (missing.includes('Lieu')) {
+      const q = villeInput.value.trim().toUpperCase();
+      msg += `<div class="agent-note">Le lieu doit être sélectionné dans la liste.
+        <a href="/static/lieux.html${q ? '?ville=' + encodeURIComponent(q) : ''}">Créer ou modifier un lieu →</a></div>`;
+    }
+    showFeedback('error', msg);
+    if (missing.includes('Lieu')) villeInput.focus();
     return false;
   }
 

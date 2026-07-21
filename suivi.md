@@ -1,94 +1,79 @@
-# Suivi — reprise de session
+# Suivi des sessions avec Claude
+<!-- Dernière modification : 2026-06-29 -->
 
-> À relire à la prochaine ouverture. Dernière mise à jour : **2026-06-23**.
-> Contexte : session où l'on a (1) ajouté l'édition de visites dans l'appli web du
-> serveur, et (2) mis en place un script DATAtourisme pour lister des brocantes.
+> Ce fichier est le point d'entrée pour reprendre le travail avec Claude.
+> À lire en début de session, à mettre à jour en fin de session.
+> Convention : section `## Session AAAA-MM-JJ` par session, la plus récente en tête.
 
-## ⏭️ À FAIRE EN PRIORITÉ À LA REPRISE
+---
 
-**Activer la génération du flux DATAtourisme sur le portail diffuseur.**
+## Session 2026-06-29
 
-Le 503 dure depuis le 18/06. Le mode `--debug-http` (ajouté le 23/06) a révélé la
-cause exacte renvoyée par DATAtourisme :
+### ✅ Fait
 
-> *« La génération du flux n'a pas encore été **programmée** ou a été **désactivée
-> suite à une période d'inactivité** »*
+**Appli web server (`server/static/index.html`) :**
+- Sélecteur d'année (2009 → année courante) déclenche directement le rapport
+- Rapport trié par date DESC puis ville ASC
+- Validation triplet obligatoire (Visiteur + Date + Ville) — bouton Enregistrer grisé si incomplet
+- Nouveaux champs achats : Avis + Vendu (numérique €)
+- Carte Qualité : cases Agréable / Non Signalée / À faire à 2
+- Zone Dépenses : affiche PML ou FRA selon visiteur, auto-calcul depuis les achats
 
-Ce n'est donc **pas** un délai de génération à attendre : il faut agir sur le
-**portail web `diffuseur.datatourisme.fr`** (impossible en ligne de commande) :
-- ouvrir le flux `cobroc-flux` (`fc4aa6312d18f42f438d0780a99e97ac`) ;
-- **(ré)activer / programmer la génération** (et vérifier qu'il n'est pas désactivé
-  pour inactivité) ;
-- au passage, confirmer **zone géographique + type de POI** (cf. question en suspens)
-  et que l'application `cobroc` est bien rattachée avec la bonne `APP_KEY`.
+**DB + serveur (`server/server.py`, `server/db/schema.sql`) :**
+- Nouveaux champs : `endroit_salle`, `qualite_agreable`, `qualite_non_signalee`, `qualite_a_faire_a_2`
+- Migration automatique au startup (`_migrate_db`)
 
-Une fois la génération programmée, l'archive se construit la nuit suivante. Retester
-depuis `server/` :
+**Export + app Flutter :**
+- `export_dart.py` : bug corrigé — sauts de ligne dans `hist_avis` non échappés → Dart invalide
+- 2223 entrées exportées, build iOS OK
 
-```bash
-.venv/bin/python scripts/datatourisme_brocantes.py --debug-http   # message exact si encore en erreur
-.venv/bin/python scripts/datatourisme_brocantes.py --inspect 2    # voir la vraie structure JSON-LD
-.venv/bin/python scripts/datatourisme_brocantes.py                # liste date + ville
-```
+**Docs :**
+- `cobrocserver.md`, `MAJDB.md`, `specs_agents_domestiques.md` → **supprimés** (obsolètes/doublons)
+- Section Dépannage fusionnée dans `server/CLAUDE.md`
+- En-têtes de date ajoutés sur tous les `.md` actifs
+- `suivi.md` restructuré (ce fichier)
 
-- Si encore **HTTP 503** → relancer avec `--debug-http` et lire le message renvoyé.
-- Si ça marche → **coller la sortie de `--inspect 2`** pour que je vérifie/ajuste
-  l'extraction (`_dates`, `_ville_cp`, `_is_brocante` dans le script). Les noms de
-  propriétés JSON-LD n'ont **pas encore été validés sur données réelles**.
+**Git :**
+- Ancien `.git` détruit + nouveau repo vierge (à faire depuis terminal — sandbox sans droits)
+- Poussé vers `https://github.com/PML54/cobroc.git`
 
-## ⚠️ SI CHANGEMENT DE MACHINE
+### ⏭️ En attente / à faire
 
-Les secrets ne sont **pas versionnés** (`server/.env` est gitignoré). Sur une
-nouvelle machine, il faudra **recréer `server/.env`** à partir de `.env.example` et
-y remettre :
-- `ANTHROPIC_API_KEY` (validateur agent du serveur)
-- `DATATOURISME_APP_KEY` (clé de l'application DATAtourisme `cobroc`)
-- `DATATOURISME_FLOW_ID=fc4aa6312d18f42f438d0780a99e97ac` (déjà dans .env.example en placeholder)
+- **DATAtourisme** : flux `cobroc-flux` (`fc4aa6312d18f42f438d0780a99e97ac`) à (ré)activer sur `diffuseur.datatourisme.fr` — génération désactivée pour inactivité (HTTP 503 depuis le 18/06)
+- **`server/scripts/videgrenier.py`** : brouillon inutilisable (robots.txt interdit le scraping) → à supprimer
+- **Commit** : les dernières modifs de cette session ne sont pas encore commitées
 
-Penser aussi à recréer le venv `server/.venv/` (`pip install -r requirements.txt`).
-Le script DATAtourisme n'utilise que la stdlib + `python-dotenv`.
+### ❓ Questions en suspens
 
-## ✅ FAIT CETTE SESSION
+- Zone géographique du flux DATAtourisme (Île-de-France ? départements précis ?) — à confirmer sur le portail
 
-### 1. Édition de visites dans l'appli web du serveur
-- `server/static/index.html` : ajout d'une carte « Modifier une visite existante »
-  (recherche par ville → charge la visite → bascule `POST`→`PUT /historic/{id}`).
-  Backend `PUT` déjà existant. **Testé OK** (round-trip PUT, agent re-valide).
-- Doc mise à jour dans `server/CLAUDE.md`.
+---
 
-### 2. Script DATAtourisme (brocantes date + ville)
-- Source vide-greniers.org **écartée** (`robots.txt: Disallow: /` + risque juridique).
-- Source retenue : **DATAtourisme** (open data, Licence Ouverte, pas de scraping).
-- Compte diffuseur + application `cobroc` + flux `cobroc-flux` créés.
-  FLOW_ID = `fc4aa6312d18f42f438d0780a99e97ac`.
-- Script : `server/scripts/datatourisme_brocantes.py` (stdlib + dotenv ; pas de
-  requests/bs4/pandas). Lit `.env`, télécharge le ZIP, parse, filtre brocantes,
-  trie par date. Compile OK, erreurs gérées (503/404/401).
-- Doc complète : **`datatourisme.md`** (racine).
-- **Statut** : test = HTTP 503 persistant. Cause identifiée le 23/06 via `--debug-http` :
-  génération du flux **non programmée / désactivée pour inactivité** (config FLOW_ID+clé
-  OK). → action sur le portail diffuseur (voir « À FAIRE EN PRIORITÉ »).
-- Ajout le 23/06 du flag `--debug-http` (affiche en-têtes + corps des réponses HTTP en erreur).
+## Session 2026-06-23
 
-## ❓ QUESTION EN SUSPENS
-- **Zone géographique du flux** DATAtourisme : pas confirmée (Île-de-France ?
-  départements précis ?). À préciser dans `datatourisme.md` une fois connue.
+### ✅ Fait
 
-## 🧹 À NETTOYER
-- `server/scripts/videgrenier.py` : brouillon de scraping vide-greniers.org,
-  **inutilisable et abandonné** (robots.txt). À **supprimer** ou neutraliser.
-  (Apparaît en `AM` dans git — semble partiellement indexé.)
+- Script `server/scripts/datatourisme_brocantes.py` (stdlib + dotenv) — liste date + ville des brocantes via open data
+- Flag `--debug-http` ajouté au script (affiche en-têtes + corps HTTP en erreur)
+- Doc `datatourisme.md` créée
+- `server/.env.example` : ajout vars `DATATOURISME_APP_KEY`, `DATATOURISME_FLOW_ID`
 
-## 📦 ÉTAT GIT AU 2026-06-18 (branche `main`, rien de committé cette session)
-```
- M lib/historibroc.dart            (modif antérieure à la session)
- M server/db/historibroc.db        (modif antérieure à la session)
- M server/.env.example             (ajout vars DATATOURISME_*)
- M server/CLAUDE.md                (doc édition web)
- M server/static/index.html        (feature édition visites)
-AM server/scripts/videgrenier.py   (à supprimer/neutraliser)
-?? datatourisme.md                 (nouvelle doc)
-?? server/scripts/datatourisme_brocantes.py (nouveau script)
-?? MAJDB.md, android/              (antérieurs, non liés)
-```
-Aucun commit n'a été fait — à décider à la reprise quoi committer.
+---
+
+## Session 2026-06-18
+
+### ✅ Fait
+
+- Édition de visites dans l'appli web : carte « Modifier une visite » + bascule POST→PUT
+- Doc `server/CLAUDE.md` mise à jour
+
+---
+
+## ⚠️ Secrets (ne jamais committer)
+
+`server/.env` (gitignoré) contient :
+- `ANTHROPIC_API_KEY` — validateur agent
+- `DATATOURISME_APP_KEY` — clé DATAtourisme
+- `DATATOURISME_FLOW_ID=fc4aa6312d18f42f438d0780a99e97ac`
+
+Sur nouvelle machine : recréer depuis `.env.example` + `pip install -r requirements.txt` dans `server/`.

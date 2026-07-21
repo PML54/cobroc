@@ -1,4 +1,5 @@
 # DATAtourisme — liste brocantes/vide-greniers (complément à brocabrac)
+<!-- Dernière modification : 2026-06-29 -->
 
 > Doc de travail — créée le 2026-06-18. Résume pourquoi et comment on récupère
 > une liste **date + ville** de brocantes via l'open data **DATAtourisme**, pour
