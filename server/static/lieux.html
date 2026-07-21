@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cobroc — Lieux</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f3ee;
+    --card: #ffffff;
+    --primary: #b5651d;
+    --primary-dark: #8b4513;
+    --text: #2d2520;
+    --muted: #888;
+    --border: #d9d0c4;
+    --focus: #b5651d;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --radius: 10px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .icon-btn {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--primary);
+    line-height: 1;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.15s;
+  }
+  .icon-btn:hover { background: #fdf5ee; }
+
+  .search-wrap { flex: 1; }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 5px;
+    margin-top: 14px;
+  }
+  label:first-of-type { margin-top: 0; }
+
+  input[type="text"],
+  input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  input:focus { outline: none; border-color: var(--focus); background: white; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .chk {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    margin: 0;
+    cursor: pointer;
+  }
+  .chk input { width: 18px; height: 18px; accent-color: var(--primary); margin: 0; }
+
+  .endroit-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px 14px;
+  }
+
+  .btn {
+    padding: 14px;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+  }
+  .btn-primary {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+  }
+  .btn-primary:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
+
+  .form-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  #editor { display: none; }
+  #editor.open { display: block; }
+
+  .editor-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+    margin-bottom: 14px;
+  }
+
+  /* Liste des lieux */
+  #list { }
+
+  .lieu-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 11px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+    background: white;
+  }
+  .lieu-row:first-child { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+  .lieu-row:last-child  { border-bottom: none; border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
+  .lieu-row:hover { background: #f5f0ea; }
+
+  .lr-ville   { font-weight: 600; flex: 0 1 18ch; max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lr-cp      { font-size: 0.82rem; color: var(--muted); flex-shrink: 0; }
+  .lr-nom     { font-size: 0.85rem; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lr-addr    { font-size: 0.78rem; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lr-visites { font-size: 0.78rem; color: #bbb; flex-shrink: 0; }
+
+  #listWrap {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .empty {
+    padding: 18px 14px;
+    color: var(--muted);
+    font-size: 0.92rem;
+    background: white;
+  }
+
+  #feedback {
+    display: none;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    font-size: 0.92rem;
+  }
+  #feedback.error   { display: block; background: #fdedec; color: var(--danger); border: 1px solid var(--danger); }
+  #feedback.success { display: block; background: #eafaf1; color: var(--success); border: 1px solid var(--success); }
+
+  #ed_error {
+    display: none;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #fdedec;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    font-size: 0.9rem;
+  }
+  #ed_error.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a class="icon-btn" href="/static/index.html" title="Retour à la saisie d'une visite">←</a>
+  <div class="search-wrap">
+    <input type="text" id="q" placeholder="Chercher une ville…"
+           autocomplete="off" autocapitalize="characters" spellcheck="false"
+           data-1p-ignore data-lpignore="true">
+  </div>
+  <button type="button" class="icon-btn" id="newBtn" title="Nouveau lieu">＋</button>
+</div>
+
+<div id="feedback"></div>
+
+<!-- Éditeur : création ou modification -->
+<div class="card" id="editor">
+  <div class="editor-title" id="editorTitle">📍 Nouveau lieu</div>
+
+  <div class="row2">
+    <div>
+      <label for="ed_ville">Ville</label>
+      <input type="text" id="ed_ville" autocomplete="off" autocapitalize="characters" spellcheck="false"
+             data-1p-ignore data-lpignore="true">
+    </div>
+    <div>
+      <label for="ed_cp">Code postal</label>
+      <input type="number" id="ed_cp" placeholder="95000" autocomplete="off"
+             data-1p-ignore data-lpignore="true">
+    </div>
+  </div>
+
+  <label for="ed_adresse">Adresse / lieu précis</label>
+  <input type="text" id="ed_adresse" placeholder="Parking, stade, centre-ville…"
+         autocomplete="off" spellcheck="false" data-1p-ignore data-lpignore="true">
+
+  <div class="row2">
+    <div>
+      <label for="ed_nom">Nom (optionnel)</label>
+      <input type="text" id="ed_nom" placeholder="Brocante de…, Vide-grenier…"
+             autocomplete="off" data-1p-ignore data-lpignore="true">
+    </div>
+    <div>
+      <label for="ed_rec">Récurrence (optionnel)</label>
+      <input type="text" id="ed_rec" placeholder="mensuel, annuel, ponctuel…"
+             autocomplete="off" data-1p-ignore data-lpignore="true">
+    </div>
+  </div>
+
+  <label>Endroit</label>
+  <div class="endroit-group">
+    <label class="chk"><input type="checkbox" id="ed_parking"> Parking</label>
+    <label class="chk"><input type="checkbox" id="ed_rues"> Rues</label>
+    <label class="chk"><input type="checkbox" id="ed_stade"> Stade</label>
+    <label class="chk"><input type="checkbox" id="ed_espace"> Espace</label>
+  </div>
+
+  <div id="ed_error"></div>
+
+  <div class="form-actions">
+    <button type="button" class="btn" id="ed_cancel">Annuler</button>
+    <button type="button" class="btn btn-primary" id="ed_save">Créer</button>
+  </div>
+</div>
+
+<div class="section-title" id="listTitle">Lieux</div>
+<div id="listWrap"><div class="empty">Chargement…</div></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let editingId = null;     // null = création, sinon id du lieu modifié
+let debounceTimer = null;
+
+const $ = id => document.getElementById(id);
+
+// ── Recherche + liste ──────────────────────────────────────────────────────
+const qInput = $('q');
+
+qInput.addEventListener('input', () => {
+  qInput.value = qInput.value.toUpperCase();
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(loadList, 250);
+});
+
+async function loadList() {
+  const q = qInput.value.trim();
+  // Sans recherche : liste complète, ordre alphabétique (limit max côté API = 1000)
+  const url = q
+    ? `/lieux?ville=${encodeURIComponent(q)}&sort=ville_asc&limit=1000`
+    : `/lieux?sort=ville_asc&limit=1000`;
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+    renderList(data, q);
+  } catch (err) {
+    $('listWrap').innerHTML = `<div class="empty">Erreur réseau : ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderList(items, q) {
+  $('listTitle').textContent = q
+    ? `Lieux — « ${q} » (${items.length})`
+    : `Tous les lieux (${items.length})`;
+
+  const wrap = $('listWrap');
+  if (!items.length) {
+    wrap.innerHTML = `<div class="empty">Aucun lieu trouvé. Utiliser ＋ pour en créer un.</div>`;
+    return;
+  }
+  wrap.innerHTML = '';
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'lieu-row';
+    row.innerHTML = `
+      <span class="lr-ville">${escapeHtml(item.ville)}</span>
+      <span class="lr-cp">${item.code_postal || ''}</span>
+      <span class="lr-nom">${escapeHtml(item.nom || '')}</span>
+      <span class="lr-addr">${escapeHtml(item.adresse || '—')}</span>
+      <span class="lr-visites">${item.nb_visites} visite${item.nb_visites > 1 ? 's' : ''}</span>
+    `;
+    row.addEventListener('click', () => openEditor(item));
+    wrap.appendChild(row);
+  });
+}
+
+// ── Éditeur ────────────────────────────────────────────────────────────────
+const editor = $('editor');
+
+function openEditor(lieu) {
+  editingId = lieu ? lieu.id : null;
+  $('editorTitle').textContent = lieu ? '✏️ Modifier le lieu' : '📍 Nouveau lieu';
+  $('ed_save').textContent     = lieu ? 'Mettre à jour' : 'Créer';
+
+  $('ed_ville').value   = lieu ? (lieu.ville || '') : qInput.value.trim().toUpperCase();
+  $('ed_cp').value      = lieu ? (lieu.code_postal || '') : '';
+  $('ed_adresse').value = lieu ? (lieu.adresse || '') : '';
+  $('ed_nom').value     = lieu ? (lieu.nom || '') : '';
+  $('ed_rec').value     = lieu ? (lieu.recurrence || '') : '';
+  $('ed_parking').checked = !!(lieu && lieu.parking);
+  $('ed_rues').checked    = !!(lieu && lieu.rues);
+  $('ed_stade').checked   = !!(lieu && lieu.stade);
+  $('ed_espace').checked  = !!(lieu && lieu.espace);
+
+  hideEdError();
+  editor.classList.add('open');
+  editor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  $('ed_cp').focus();
+}
+
+function closeEditor() {
+  editor.classList.remove('open');
+  editingId = null;
+}
+
+$('newBtn').addEventListener('click', () => openEditor(null));
+$('ed_cancel').addEventListener('click', closeEditor);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && editor.classList.contains('open')) closeEditor();
+});
+
+$('ed_save').addEventListener('click', saveLieu);
+
+async function saveLieu() {
+  const ville      = $('ed_ville').value.trim().toUpperCase();
+  const cp         = parseInt($('ed_cp').value) || 0;
+  const adresse    = $('ed_adresse').value.trim();
+  const nom        = $('ed_nom').value.trim();
+  const recurrence = $('ed_rec').value.trim();
+  const body = {
+    nom, ville, code_postal: cp, adresse, recurrence,
+    parking: $('ed_parking').checked ? 1 : 0,
+    rues:    $('ed_rues').checked    ? 1 : 0,
+    stade:   $('ed_stade').checked   ? 1 : 0,
+    espace:  $('ed_espace').checked  ? 1 : 0,
+  };
+
+  if (!ville) { showEdError('La ville est obligatoire.'); return; }
+  if (!cp)    { showEdError('Le code postal est obligatoire.'); return; }
+
+  const btn = $('ed_save');
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Enregistrement…';
+  hideEdError();
+
+  const isEdit = editingId !== null;
+
+  try {
+    const res = await fetch(isEdit ? `/lieux/${editingId}` : '/lieux', {
+      method: isEdit ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      closeEditor();
+      showFeedback('success', isEdit
+        ? `✓ Lieu mis à jour : ${data.ville}${data.adresse ? ' — ' + data.adresse : ''}`
+        : `✓ Lieu créé : ${data.ville}${data.adresse ? ' — ' + data.adresse : ''}`);
+      qInput.value = data.ville.toUpperCase();
+      loadList();
+    } else {
+      showEdError(data.detail ? JSON.stringify(data.detail) : 'Erreur lors de l’enregistrement.');
+    }
+  } catch (err) {
+    showEdError('Erreur réseau : ' + err.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = label;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function showEdError(msg) { const el = $('ed_error'); el.textContent = msg; el.classList.add('show'); }
+function hideEdError()    { $('ed_error').classList.remove('show'); }
+
+function showFeedback(type, html) {
+  const el = $('feedback');
+  el.className = type;
+  el.innerHTML = html;
+  setTimeout(() => { el.className = ''; }, 4000);
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+// ?ville=XXX  → pré-remplit la recherche (lien depuis le formulaire de visite)
+// ?new=1      → ouvre directement l'éditeur en création
+const params = new URLSearchParams(location.search);
+if (params.get('ville')) qInput.value = params.get('ville').toUpperCase();
+loadList().then(() => { if (params.get('new')) openEditor(null); });
+</script>
+</body>
+</html>
