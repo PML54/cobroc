@@ -1,5 +1,5 @@
 // lib/historibroc.dart
-// Modified: 2609271815
+// Modified: 2609271854
 // Historic — liste des brocantes visitées
 // CHANGEMENTS: (1) Export automatique depuis SQLite — 2243 entrées validées
 
