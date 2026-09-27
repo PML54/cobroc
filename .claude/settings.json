@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 180,
+            "statusMessage": "cobroc : vérification de la toolchain Flutter…",
+            "command": "if command -v flutter >/dev/null 2>&1; then if [ ! -d .dart_tool ]; then flutter pub get >/dev/null 2>&1 || true; PUBGET=' — flutter pub get exécuté (deps résolues)'; else PUBGET=' — deps déjà résolues'; fi; VER=$(flutter --version 2>/dev/null | head -1); printf '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"cobroc: toolchain Flutter présente (%s)%s. flutter analyze / flutter test disponibles : les lancer avant de présenter un diff (convention projet: analyze sans warning).\"}}' \"$VER\" \"$PUBGET\"; else printf '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"cobroc: ATTENTION flutter absent du PATH (session cloud sans toolchain). flutter analyze / flutter test INDISPONIBLES: ne pas affirmer que analyze passe. Installer Flutter via le script de setup de l environnement cloud (pas via ce hook: le PATH d un sous-process ne remonte pas). Les diffs produits ici doivent etre verifies sur le Mac avant merge.\"}}'; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
