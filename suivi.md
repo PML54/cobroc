@@ -19,6 +19,7 @@
 - Notes « brocabrac.fr et datatourisme injoignables par design » **conservées** dans
   `.claude/settings.json` et `docs/CLOUD_SESSIONS.md` (garde-fou réseau / gel légal,
   indépendant des scripts abandonnés).
+- **Commit + push** : `bbf564b chore: abandon DATAtourisme + videgrenier` poussé sur `main`.
 
 ---
 
