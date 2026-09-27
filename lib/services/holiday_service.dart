@@ -1,3 +1,7 @@
+// lib/services/holiday_service.dart
+// Modified: 2609272039
+// Calendrier des jours fériés français + logique jour de brocante (Sam/Dim/Férié)
+// CHANGEMENTS: (1) ajout en-tête obligatoire, (2) suppression méthode statique _today() inutilisée
 class HolidayService {
   static DateTime _easter(int year) {
     int a = year % 19;
@@ -21,11 +25,11 @@ class HolidayService {
     final easter = _easter(year);
     return {
       DateTime(year, 1, 1),
-      easter.add(const Duration(days: 1)),   // Lundi de Pâques
+      easter.add(const Duration(days: 1)), // Lundi de Pâques
       DateTime(year, 5, 1),
       DateTime(year, 5, 8),
-      easter.add(const Duration(days: 39)),  // Ascension
-      easter.add(const Duration(days: 50)),  // Lundi de Pentecôte
+      easter.add(const Duration(days: 39)), // Ascension
+      easter.add(const Duration(days: 50)), // Lundi de Pentecôte
       DateTime(year, 7, 14),
       DateTime(year, 8, 15),
       DateTime(year, 11, 1),
@@ -46,8 +50,8 @@ class HolidayService {
   }
 
   static DateTime nextBrocanteDay(DateTime from) {
-    DateTime dt = DateTime(from.year, from.month, from.day)
-        .add(const Duration(days: 1));
+    DateTime dt =
+        DateTime(from.year, from.month, from.day).add(const Duration(days: 1));
     for (int i = 0; i < 400; i++) {
       if (isBrocanteDay(dt)) return dt;
       dt = dt.add(const Duration(days: 1));
@@ -102,11 +106,6 @@ class HolidayService {
     final idx = days.indexWhere((d) => _sameDay(d, current));
     if (idx == -1) return days.last;
     return days[(idx - 1 + days.length) % days.length];
-  }
-
-  static DateTime _today() {
-    final n = DateTime.now();
-    return DateTime(n.year, n.month, n.day);
   }
 
   static DateTime _mondayOf(DateTime date) {
