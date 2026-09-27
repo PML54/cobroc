@@ -1265,12 +1265,14 @@ async function openRecentPanel() {
       const pending = item.validated ? '' : '<span class="rp-pending">⏳</span>';
       const lieu    = item.hist_adresse ? escapeHtml(item.hist_adresse) : '';
       const expo    = item.hist_nb_expo ? `${item.hist_nb_expo} exp.` : '';
-      const { marge, revendu } = margeVisite(item.hist_detail);
+      const { achat, marge, revendu } = margeVisite(item.hist_detail);
       // Benefice / deficit ne sont pertinents que si au moins un objet a ete revendu.
       const beneficiaire = revendu && marge > 0;
       const deficitaire  = revendu && marge < 0;
+      // Rien revendu mais des achats : on affiche la depense totale en rouge.
+      const depenseSeule = !revendu && achat > 0;
       if (beneficiaire) div.classList.add('rp-gain');
-      else if (deficitaire) div.classList.add('rp-perte');
+      else if (deficitaire || depenseSeule) div.classList.add('rp-perte');
       div.innerHTML = `
         <span class="rp-date">${item.hist_date}</span>
         <span class="rp-name">${item.hist_name}</span>
@@ -1279,6 +1281,7 @@ async function openRecentPanel() {
         ${expo ? `<span class="rp-expo">${expo}</span>` : ''}
         ${beneficiaire ? `<span class="rp-marge">+${marge}€</span>` : ''}
         ${deficitaire  ? `<span class="rp-marge rp-marge-perte">${marge}€</span>` : ''}
+        ${depenseSeule ? `<span class="rp-marge rp-marge-perte">-${achat}€</span>` : ''}
         <span class="rp-note">${note}</span>
         ${item.hist_avis ? `<span class="rp-avis">${escapeHtml(item.hist_avis)}</span>` : ''}
         ${pending}
