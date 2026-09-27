@@ -11,15 +11,56 @@
 
 ### ✅ Fait
 
-- **Abandon DATAtourisme + videgrenier** (décision PML : « je n'en veux plus »). Supprimés :
-  - `server/scripts/datatourisme_brocantes.py`
-  - `server/scripts/videgrenier.py`
-  - `datatourisme.md`
-  - variables `DATATOURISME_FLOW_ID` / `DATATOURISME_APP_KEY` de `server/.env.example`
-- Notes « brocabrac.fr et datatourisme injoignables par design » **conservées** dans
-  `.claude/settings.json` et `docs/CLOUD_SESSIONS.md` (garde-fou réseau / gel légal,
-  indépendant des scripts abandonnés).
-- **Commit + push** : `bbf564b chore: abandon DATAtourisme + videgrenier` poussé sur `main`.
+**1. Abandon DATAtourisme + videgrenier** (décision PML : « je n'en veux plus »). Supprimés :
+`server/scripts/datatourisme_brocantes.py`, `server/scripts/videgrenier.py`,
+`datatourisme.md`, variables `DATATOURISME_*` de `server/.env.example`.
+Notes « injoignables par design » **conservées** dans `.claude/settings.json` et
+`docs/CLOUD_SESSIONS.md` (garde-fou réseau / gel légal).
+
+**2. 🚨 Incident perte de données + récupération (le gros morceau).**
+Symptôme : plus aucune visite entre le 19/07 et aujourd'hui dans la base live.
+- **Cause** : un lancement de *Claude Code on the web* avait **téléporté** le repo →
+  `git stash` automatique (« Teleport auto-stash ») des modifs non committées, dont la
+  base `historibroc.db`. La copie de travail était revenue à l'état committé du 21/07.
+- **Récupération** : données d'été retrouvées dans le stash, fusionnées avec les saisies
+  du jour (nouveaux id pour éviter la collision). Base restaurée : été (25/07→20/09) + jour.
+- **Leçon consignée** dans `server/CLAUDE.md` : **committer la base AVANT toute session cloud**
+  (une base non committée est stashée/perdue par la téléportation). Réflexe : `git stash list`.
+
+**3. Récupération complète du stash droppé.** Le `git stash drop` avait aussi fait tomber
+d'autres modifs non committées. Commit `1c4f55d` re-sécurisé par tag, puis restaurés :
+`server/static/index.html` (feature achats/ventes), `normalize_detail.py`,
+`recompute_depenses.py`, `AGENTS.md`, `analysis_options.yaml`, exports CSV, `pubspec.lock`.
+
+**4. Feature bilan achats/ventes (`server/static/index.html`).** Panneau récent (🕐) :
+🟢 `+marge€` (revendu avec bénéfice), 🔴 `marge€` (revendu à perte), 🔴 `-achat€`
+(**nouveau** : achats mais rien revendu → dépense totale en rouge). Sans chiffre seulement
+si aucun achat détaillé.
+
+**5. Validation des 21 entrées en attente.** Toutes des faux positifs « doublon » =
+visites conjointes PML+FRA (même ville/date, visiteurs différents). Validées manuellement.
+Base : **2265 visites, 0 pending**.
+
+**6. Correctif règle de doublon (`server/agent/validator.py`).** Détection déléguée au LLM
+(Haiku) → refusait à tort les sorties à deux. Corrigé : détection **déterministe**
+(`_is_true_duplicate` sur `hist_name`+`hist_date`+ville normalisée), prompt qui retire ce
+jugement au LLM et rappelle que PML≠FRA. **Testé en réel** : visite conjointe acceptée,
+vrai doublon bloqué.
+
+**7. Export + snapshot.** `export_dart.py` relancé → `lib/historibroc.dart` régénéré
+(`dart analyze` clean). Base committée à jour.
+
+### 🧾 Commits poussés sur `main`
+`bbf564b` abandon DATAtourisme/videgrenier · `5327f15` suivi · `6258cae` restauration base ·
+`c3f9e2f` leçon session cloud · `f51882b` restauration complète stash · `3723225` feature dépense rouge ·
+`c1ed659` + `3a4ce5e` export/validation · `3ca11e2` fix doublon déterministe · `e582ca8` snapshot base.
+
+### ⏭️ Reste à faire
+- **Rebuild app Flutter** (`flutter build ios`) pour propager les données sur l'iPhone.
+- (Optionnel) corriger la phrase tronquée dans le message du commit `3ca11e2` (cosmétique).
+
+### 🛟 Backups locaux (gitignorés) créés ce jour
+`historibroc.backup-2609271621-{LIVE,STASH}-*.db`, `historibroc.backup-2609271953-avant-validation-21.db`.
 
 ---
 
