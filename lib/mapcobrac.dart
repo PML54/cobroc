@@ -1,3 +1,7 @@
+// lib/mapcobrac.dart
+// Modified: 2609272039
+// Vue carte grille des départements pour sélection d'un trajet
+// CHANGEMENTS: (1) ajout en-tête obligatoire, (2) suppression boucle morte dupliquée qui calculait puis jetait la distance (variable distance inutilisée)
 import 'dart:math';
 
 import 'package:cobroc/diverspml.dart';
@@ -202,20 +206,7 @@ class _MapCobracState extends State<MapCobrac> {
       }
       print(departement.distances);
     }
-
-    for (Departement departement in lesDepartements) {
-      for (int i = 0; i < departement.pourtour.length; i++) {
-        var deptVoisinId = departement.pourtour[i];
-        var deptVoisin =
-            lesDepartements.firstWhere((d) => d.departement == deptVoisinId);
-
-        var distance = calculerDistance(departement.latitude,
-            departement.longitude, deptVoisin.latitude, deptVoisin.longitude);
-      }
-    }
   }
-
-
 
   void updateDepartement(int thisdepart) {
     setState(() {

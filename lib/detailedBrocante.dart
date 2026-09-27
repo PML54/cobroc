@@ -1,7 +1,7 @@
 // lib/detailedBrocante.dart
-// Modified: 260606161500
+// Modified: 2609272039
 // Détail brocante — analyse historique
-// CHANGEMENTS: (1) analyzeBrocante: remplace toUpperCase par Historic.matchesVille pour match partiel, ligne 259
+// CHANGEMENTS: (1) analyzeBrocante: corrige clé 'commentaires' dupliquée (le score était écrasé par le texte) → score renommé 'commentaires_score' ligne 300
 import 'package:cobroc/historibroc.dart' show Historic, listHistoric;
 import 'package:cobroc/pmltools.dart';
 import 'package:flutter/material.dart';
@@ -22,8 +22,6 @@ String findMostRecentDate(List<Historic> entries) {
   });
   return entries.first.histDate;
 }
-
-
 
 class DetailBroc extends StatefulWidget {
   const DetailBroc({super.key});
@@ -147,11 +145,13 @@ class _DetailBrocState extends State<DetailBroc> {
           children: [
             Text(
               "$thatbrocPostal $thatbrocLocality",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: thatColor),
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold, color: thatColor),
             ),
             const SizedBox(height: 8),
             Text("Identifiant Brocabrac = $thatbrocEventId"),
-            Text("Lieu = $thatbrocVenueName", style: const TextStyle(color: Colors.blue)),
+            Text("Lieu = $thatbrocVenueName",
+                style: const TextStyle(color: Colors.blue)),
             Text(thatbrocStreet),
             Text("$thatbrocNbExposants Exposants"),
             Text("Revenu Moyen = $thatRevenu€"),
@@ -171,7 +171,8 @@ class _DetailBrocState extends State<DetailBroc> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Description", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text("Description",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(thatbrocDescription),
           ],
@@ -188,21 +189,23 @@ class _DetailBrocState extends State<DetailBroc> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Analyse de la brocante", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text("Analyse de la brocante",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             if (brocAnalysis.isNotEmpty)
               ...brocAnalysis.entries.map((entry) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(entry.key.replaceAll('_', ' ').capitalize()),
-                    Text(entry.value.toString()),
-                  ],
-                ),
-              ))
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(entry.key.replaceAll('_', ' ').capitalize()),
+                        Text(entry.value.toString()),
+                      ],
+                    ),
+                  ))
             else
-              const Text('Aucune donnée d\'analyse disponible', style: TextStyle(color: Colors.grey)),
+              const Text('Aucune donnée d\'analyse disponible',
+                  style: TextStyle(color: Colors.grey)),
           ],
         ),
       ),
@@ -259,16 +262,23 @@ class _DetailBrocState extends State<DetailBroc> {
     });
     return true;
   }
+
   Map<String, dynamic> analyzeBrocante(String ville) {
-    var cityEntries = listHistoric.where((h) => Historic.matchesVille(h.histVille, ville)).toList();
+    var cityEntries = listHistoric
+        .where((h) => Historic.matchesVille(h.histVille, ville))
+        .toList();
 
     if (cityEntries.isEmpty) {
       return {'error': 'Aucune donnée historique trouvée pour cette ville'};
     }
 
-    double avgQuality = safeAverage(cityEntries.map((e) => e.histGood).where((e) => e > 0));
-    double avgSize = safeAverage(cityEntries.map((e) => e.histNbExpo).where((e) => e > 0));
-    double avgSpending = safeAverage(cityEntries.map((e) => (e.histPmlDep + e.histFraDep + e.histMaisonDep)).where((e) => e > 0));
+    double avgQuality =
+        safeAverage(cityEntries.map((e) => e.histGood).where((e) => e > 0));
+    double avgSize =
+        safeAverage(cityEntries.map((e) => e.histNbExpo).where((e) => e > 0));
+    double avgSpending = safeAverage(cityEntries
+        .map((e) => (e.histPmlDep + e.histFraDep + e.histMaisonDep))
+        .where((e) => e > 0));
     int frequency = cityEntries.length;
     String lastDate = findMostRecentDate(cityEntries);
 
@@ -276,37 +286,47 @@ class _DetailBrocState extends State<DetailBroc> {
       return {'error': 'Données insuffisantes pour une analyse complète'};
     }
 
-    var allComments = cityEntries.map((e) => "${e.histAvis} ${e.histDetail}").join(" ");
+    var allComments =
+        cityEntries.map((e) => "${e.histAvis} ${e.histDetail}").join(" ");
     var positiveWords = ['bon', 'bien', 'super', 'intéressant', 'qualité'];
     var negativeWords = ['mauvais', 'pauvre', 'décevant', 'éviter', 'rien'];
-    int positiveCount = positiveWords.fold(0, (sum, word) => sum + allComments.toLowerCase().split(word).length - 1);
-    int negativeCount = negativeWords.fold(0, (sum, word) => sum + allComments.toLowerCase().split(word).length - 1);
+    int positiveCount = positiveWords.fold(0,
+        (sum, word) => sum + allComments.toLowerCase().split(word).length - 1);
+    int negativeCount = negativeWords.fold(0,
+        (sum, word) => sum + allComments.toLowerCase().split(word).length - 1);
 
     int qualityScore = (avgQuality / 5 * 20).round();
     int sizeScore = (min(avgSize / 300, 1) * 20).round();
     int spendingScore = (min(avgSpending / 100, 1) * 20).round();
     int consistencyScore = (min(frequency / 10, 1) * 20).round();
-    int commentScore = positiveCount > negativeCount ? 16 : (positiveCount < negativeCount ? 8 : 12);
+    int commentScore = positiveCount > negativeCount
+        ? 16
+        : (positiveCount < negativeCount ? 8 : 12);
 
-    int overallScore = ((qualityScore + sizeScore + spendingScore + consistencyScore + commentScore) / 5).round();
+    int overallScore = ((qualityScore +
+                sizeScore +
+                spendingScore +
+                consistencyScore +
+                commentScore) /
+            5)
+        .round();
 
     return {
       'ville': ville,
       'qualité': '$qualityScore/20',
       'taille': '$sizeScore/20',
-      'dernière Visite': lastDate,  // Ajout de la dernière date
+      'dernière Visite': lastDate, // Ajout de la dernière date
       'potentiel_achat': '$spendingScore/20',
       // 'constance': '$consistencyScore/20',
-      'commentaires': '$commentScore/20',
+      'commentaires_score': '$commentScore/20',
       'note_globale': '$overallScore/20',
       'fréquence': frequency,
       'taille_moyenne': '${avgSize.round()} exposants',
       'dépense_moyenne': '${avgSpending.round()}€',
       'commentaires': 'Positifs: $positiveCount, Négatifs: $negativeCount',
-
-
     };
   }
+
 // Fonction utilitaire pour limiter une valeur
   double min(double a, double b) => (a < b) ? a : b;
 }

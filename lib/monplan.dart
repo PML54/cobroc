@@ -1,3 +1,7 @@
+// lib/monplan.dart
+// Modified: 2609272039
+// Carte interactive du trajet (flutter_map + OpenStreetMap)
+// CHANGEMENTS: (1) ajout en-tête obligatoire, (2) suppression boucle morte sur _brocky (corps réduit à un print commenté)
 import 'dart:math';
 
 import 'package:cobroc/detailedBrocante.dart';
@@ -66,7 +70,7 @@ class _MonPlanState extends State<MonPlan> {
   double longitudeLarris = 2.1;
   double latitudePortbail = 49.333;
   double longitudePortbail = -1.7;
-  double latitudeSelect =  49.05;
+  double latitudeSelect = 49.05;
   double longitudeSelect = 2.1;
   DateTime now = DateTime.now();
 
@@ -128,7 +132,7 @@ class _MonPlanState extends State<MonPlan> {
         icon: const Icon(Icons.arrow_left),
         onPressed: gotoPreviousMarker,
       ),
-      title: displayZoomButton(brocSpot),  // Placez le zoom button au centre
+      title: displayZoomButton(brocSpot), // Placez le zoom button au centre
       actions: <Widget>[
         IconButton(
           icon: const Icon(Icons.arrow_right),
@@ -137,13 +141,6 @@ class _MonPlanState extends State<MonPlan> {
       ],
     );
   }
-
-
-
-
-
-
-
 
   Widget buildBottomNavigationBar() {
     return Row(
@@ -193,10 +190,10 @@ class _MonPlanState extends State<MonPlan> {
     return FlutterMap(
       mapController: mapController,
       options: MapOptions(
-       initialCenter: const LatLng(49.05, 2.1),
+        initialCenter: const LatLng(49.05, 2.1),
         //  double latitudePortbail = 49.333;
         //   double longitudePortbail = -1.7;
-       // initialCenter: const LatLng(49.333,-1.7),
+        // initialCenter: const LatLng(49.333,-1.7),
         initialZoom: initialZoom,
       ),
       children: [
@@ -266,9 +263,6 @@ class _MonPlanState extends State<MonPlan> {
       });
       brocabrac.brocMaster = nbBrocOK; // indicateur Index pour les flèches
     }
-    for (Brocabrac _brocky in brocanteBrocabrac) {
-      //print("DistanceCheck  ${_brocky.brocLocality}: ${_brocky.brocFromSelect}");
-    }
   }
 
   Color determineColor(String nbExposants) {
@@ -303,7 +297,7 @@ class _MonPlanState extends State<MonPlan> {
   }
 
   void gotoNextMarker() {
-    print ('gotoNextMarker');
+    print('gotoNextMarker');
     if (currentMarkerIndex < brocanteBrocabrac.length - 1) {
       setState(() {
         currentMarkerIndex++;

@@ -1,17 +1,17 @@
 // lib/managerpml.dart
-// Modified: 260606160000
+// Modified: 2609272039
 // Manager principal — liste des brocantes
-// CHANGEMENTS: (1) isInHistoric: match partiel préfixe pour villes avec suffixe géographique (ex: ERAGNY → ERAGNYSUROISE), ligne 976
+// CHANGEMENTS: (1) retrait Historic inutilisé du show import ligne 11, (2) retrait GoToMarket inutilisé du show import ligne 14, (3) suppression méthode _saveLieuActuel inutilisée
 import 'dart:async';
 
 import 'package:cobroc/communestchinos.dart';
 import 'package:cobroc/departements.dart';
 import 'package:cobroc/detailedBrocante.dart';
 import 'package:cobroc/diverspml.dart' show jours, mois;
-import 'package:cobroc/historibroc.dart' show Historic, listHistoric;
+import 'package:cobroc/historibroc.dart' show listHistoric;
 import 'package:cobroc/monplan.dart';
 import 'package:cobroc/networking.dart' show NetworkHelper;
-import 'package:cobroc/pmltools.dart' show Brocabrac, GoToMarket, ManageCobrac;
+import 'package:cobroc/pmltools.dart' show Brocabrac, ManageCobrac;
 import 'package:diacritic/diacritic.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -983,7 +983,9 @@ class _ManagerPMLState extends State<ManagerPML> {
     // Match partiel : "ERAGNY" doit matcher "ERAGNYSUROISE" et vice-versa
     if (normalized.length < 4) return false;
     return _historicIndex.any(
-      (h) => h.length >= 4 && (h.startsWith(normalized) || normalized.startsWith(h)),
+      (h) =>
+          h.length >= 4 &&
+          (h.startsWith(normalized) || normalized.startsWith(h)),
     );
   }
 
@@ -1097,10 +1099,6 @@ class _ManagerPMLState extends State<ManagerPML> {
     ));
   }
 
-  Future<void> _saveLieuActuel(int lieu) async {
-    await StorageService.saveLieuActuel(lieu);
-  }
-
   Future<void> _saveMonCoin(List<int> deps) async {
     await StorageService.saveMonCoin(deps);
   }
@@ -1191,8 +1189,7 @@ class _ManagerPMLState extends State<ManagerPML> {
                   value: tempActif,
                   onChanged: (v) => setDlg(() {
                     tempActif = v;
-                    if (v)
-                      villesProches = _cinqVillesProches(tempLat, tempLon);
+                    if (v) villesProches = _cinqVillesProches(tempLat, tempLon);
                   }),
                 ),
                 const Text('GPS simulé', style: TextStyle(fontSize: 13)),
@@ -1204,52 +1201,46 @@ class _ManagerPMLState extends State<ManagerPML> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (tempActif) ...[
-                      const SizedBox(height: 8),
-                      // 2D drag pad
-                      Center(
-                        child: GestureDetector(
-                          onTapDown: (d) {
-                            final dx =
-                                d.localPosition.dx.clamp(0.0, padW);
-                            final dy =
-                                d.localPosition.dy.clamp(0.0, padH);
-                            setDlg(() {
-                              tempLat = pyToLat(dy);
-                              tempLon = pxToLon(dx);
-                              villesProches =
-                                  _cinqVillesProches(tempLat, tempLon);
-                            });
-                          },
-                          onPanUpdate: (d) {
-                            setDlg(() {
-                              final newPy =
-                                  (latToPy(tempLat) + d.delta.dy)
-                                      .clamp(0.0, padH);
-                              final newPx =
-                                  (lonToPx(tempLon) + d.delta.dx)
-                                      .clamp(0.0, padW);
-                              tempLat = pyToLat(newPy);
-                              tempLon = pxToLon(newPx);
-                              villesProches =
-                                  _cinqVillesProches(tempLat, tempLon);
-                            });
-                          },
-                          child: Container(
-                            width: padW,
-                            height: padH,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                  color: Colors.blueGrey.shade400),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(3),
-                              child: Stack(
-                                children: [
-                                  const Positioned.fill(
-                                    child: CustomPaint(
-                                        painter: _FrancePainter()),
-                                  ),
+                    const SizedBox(height: 8),
+                    // 2D drag pad
+                    Center(
+                      child: GestureDetector(
+                        onTapDown: (d) {
+                          final dx = d.localPosition.dx.clamp(0.0, padW);
+                          final dy = d.localPosition.dy.clamp(0.0, padH);
+                          setDlg(() {
+                            tempLat = pyToLat(dy);
+                            tempLon = pxToLon(dx);
+                            villesProches =
+                                _cinqVillesProches(tempLat, tempLon);
+                          });
+                        },
+                        onPanUpdate: (d) {
+                          setDlg(() {
+                            final newPy = (latToPy(tempLat) + d.delta.dy)
+                                .clamp(0.0, padH);
+                            final newPx = (lonToPx(tempLon) + d.delta.dx)
+                                .clamp(0.0, padW);
+                            tempLat = pyToLat(newPy);
+                            tempLon = pxToLon(newPx);
+                            villesProches =
+                                _cinqVillesProches(tempLat, tempLon);
+                          });
+                        },
+                        child: Container(
+                          width: padW,
+                          height: padH,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.blueGrey.shade400),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(3),
+                            child: Stack(
+                              children: [
+                                const Positioned.fill(
+                                  child: CustomPaint(painter: _FrancePainter()),
+                                ),
                                 const Positioned(
                                   top: 2,
                                   left: 0,
@@ -1321,130 +1312,123 @@ class _ManagerPMLState extends State<ManagerPML> {
                         ),
                       ),
                     ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Lat: ${tempLat.toStringAsFixed(2)}°N   Lon: ${tempLon.toStringAsFixed(2)}°',
-                        style: const TextStyle(
-                            fontSize: 12, color: Colors.black87),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 4),
-                      // ± fine-tuning buttons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Row(children: [
-                            const Text('N/S',
-                                style: TextStyle(fontSize: 11)),
-                            const SizedBox(width: 2),
-                            IconButton(
-                              icon:
-                                  const Icon(Icons.remove_circle_outline),
-                              iconSize: 20,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () => setDlg(() {
-                                tempLat =
-                                    (tempLat + 0.1).clamp(latMin, latMax);
-                                villesProches =
-                                    _cinqVillesProches(tempLat, tempLon);
-                              }),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.add_circle_outline),
-                              iconSize: 20,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () => setDlg(() {
-                                tempLat =
-                                    (tempLat - 0.1).clamp(latMin, latMax);
-                                villesProches =
-                                    _cinqVillesProches(tempLat, tempLon);
-                              }),
-                            ),
-                          ]),
-                          Row(children: [
-                            const Text('O/E',
-                                style: TextStyle(fontSize: 11)),
-                            const SizedBox(width: 2),
-                            IconButton(
-                              icon:
-                                  const Icon(Icons.remove_circle_outline),
-                              iconSize: 20,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () => setDlg(() {
-                                tempLon =
-                                    (tempLon - 0.1).clamp(lonMin, lonMax);
-                                villesProches =
-                                    _cinqVillesProches(tempLat, tempLon);
-                              }),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.add_circle_outline),
-                              iconSize: 20,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () => setDlg(() {
-                                tempLon =
-                                    (tempLon + 0.1).clamp(lonMin, lonMax);
-                                villesProches =
-                                    _cinqVillesProches(tempLat, tempLon);
-                              }),
-                            ),
-                          ]),
-                        ],
-                      ),
-                      if (villesProches.isNotEmpty) ...[
-                        const Divider(height: 8),
-                        SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: villesProches.map((v) => InkWell(
-                              onTap: () => setDlg(() {
-                                tempLat = v.ville.latitude;
-                                tempLon = v.ville.longitude;
-                                villesProches =
-                                    _cinqVillesProches(tempLat, tempLon);
-                              }),
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 5),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.location_on,
-                                        size: 14, color: Colors.blue),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        '${v.ville.nom} (${v.ville.departement})',
-                                        style:
-                                            const TextStyle(fontSize: 13),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Lat: ${tempLat.toStringAsFixed(2)}°N   Lon: ${tempLon.toStringAsFixed(2)}°',
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.black87),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    // ± fine-tuning buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Row(children: [
+                          const Text('N/S', style: TextStyle(fontSize: 11)),
+                          const SizedBox(width: 2),
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            iconSize: 20,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () => setDlg(() {
+                              tempLat = (tempLat + 0.1).clamp(latMin, latMax);
+                              villesProches =
+                                  _cinqVillesProches(tempLat, tempLon);
+                            }),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline),
+                            iconSize: 20,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () => setDlg(() {
+                              tempLat = (tempLat - 0.1).clamp(latMin, latMax);
+                              villesProches =
+                                  _cinqVillesProches(tempLat, tempLon);
+                            }),
+                          ),
+                        ]),
+                        Row(children: [
+                          const Text('O/E', style: TextStyle(fontSize: 11)),
+                          const SizedBox(width: 2),
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            iconSize: 20,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () => setDlg(() {
+                              tempLon = (tempLon - 0.1).clamp(lonMin, lonMax);
+                              villesProches =
+                                  _cinqVillesProches(tempLat, tempLon);
+                            }),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline),
+                            iconSize: 20,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () => setDlg(() {
+                              tempLon = (tempLon + 0.1).clamp(lonMin, lonMax);
+                              villesProches =
+                                  _cinqVillesProches(tempLat, tempLon);
+                            }),
+                          ),
+                        ]),
+                      ],
+                    ),
+                    if (villesProches.isNotEmpty) ...[
+                      const Divider(height: 8),
+                      SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: villesProches
+                              .map((v) => InkWell(
+                                    onTap: () => setDlg(() {
+                                      tempLat = v.ville.latitude;
+                                      tempLon = v.ville.longitude;
+                                      villesProches =
+                                          _cinqVillesProches(tempLat, tempLon);
+                                    }),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 5),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.location_on,
+                                              size: 14, color: Colors.blue),
+                                          const SizedBox(width: 4),
+                                          Expanded(
+                                            child: Text(
+                                              '${v.ville.nom} (${v.ville.departement})',
+                                              style:
+                                                  const TextStyle(fontSize: 13),
+                                            ),
+                                          ),
+                                          Text('${v.distKm} km',
+                                              style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey)),
+                                        ],
                                       ),
                                     ),
-                                    Text('${v.distKm} km',
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey)),
-                                  ],
-                                ),
-                              ),
-                            )).toList(),
-                          ),
+                                  ))
+                              .toList(),
                         ),
-                      ],
+                      ),
                     ],
                   ],
-                ),
+                ],
               ),
+            ),
             actions: [
               TextButton(
                 child: const Text('Annuler'),
                 onPressed: () => Navigator.of(context).pop(),
               ),
               ElevatedButton(
-                style:
-                    ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                 child: const Text('Appliquer',
                     style: TextStyle(color: Colors.white)),
                 onPressed: () async {
@@ -1554,35 +1538,35 @@ class _FrancePainter extends CustomPainter {
     [-1.56, 43.49], // Bayonne
     [-1.77, 43.37], // Hendaye
     [-0.92, 43.30], // Pyrénées ouest
-    [ 0.32, 42.79], // Pyrénées centre
-    [ 1.73, 42.47], // Pyrénées est
-    [ 2.97, 42.51], // Perpignan
-    [ 3.06, 42.92], // Leucate
-    [ 3.70, 43.40], // Sète
-    [ 4.19, 43.57], // Camargue
-    [ 5.33, 43.22], // Marseille
-    [ 5.93, 43.11], // Toulon
-    [ 6.64, 43.27], // St-Tropez
-    [ 7.26, 43.70], // Nice
-    [ 7.52, 43.76], // Menton
-    [ 7.00, 44.90], // Alpes intérieures
-    [ 6.50, 46.00], // frontière suisse
-    [ 6.09, 46.38], // Lac Léman
-    [ 7.59, 47.49], // Bâle
-    [ 7.68, 47.75], // Mulhouse
-    [ 7.75, 48.58], // Strasbourg
-    [ 7.94, 49.04], // Wissembourg
-    [ 6.17, 49.46], // Luxembourg
-    [ 5.82, 49.54], // Longwy
-    [ 4.87, 49.54], // frontière belge
-    [ 4.19, 50.25], // Maubeuge
-    [ 3.37, 50.51], // Valenciennes
-    [ 2.55, 50.81], // frontière belge NW
-    [ 2.37, 51.04], // Dunkerque
-    [ 1.85, 50.98], // Calais
-    [ 1.60, 50.73], // Boulogne
-    [ 1.08, 49.93], // Dieppe
-    [ 0.11, 49.49], // Le Havre
+    [0.32, 42.79], // Pyrénées centre
+    [1.73, 42.47], // Pyrénées est
+    [2.97, 42.51], // Perpignan
+    [3.06, 42.92], // Leucate
+    [3.70, 43.40], // Sète
+    [4.19, 43.57], // Camargue
+    [5.33, 43.22], // Marseille
+    [5.93, 43.11], // Toulon
+    [6.64, 43.27], // St-Tropez
+    [7.26, 43.70], // Nice
+    [7.52, 43.76], // Menton
+    [7.00, 44.90], // Alpes intérieures
+    [6.50, 46.00], // frontière suisse
+    [6.09, 46.38], // Lac Léman
+    [7.59, 47.49], // Bâle
+    [7.68, 47.75], // Mulhouse
+    [7.75, 48.58], // Strasbourg
+    [7.94, 49.04], // Wissembourg
+    [6.17, 49.46], // Luxembourg
+    [5.82, 49.54], // Longwy
+    [4.87, 49.54], // frontière belge
+    [4.19, 50.25], // Maubeuge
+    [3.37, 50.51], // Valenciennes
+    [2.55, 50.81], // frontière belge NW
+    [2.37, 51.04], // Dunkerque
+    [1.85, 50.98], // Calais
+    [1.60, 50.73], // Boulogne
+    [1.08, 49.93], // Dieppe
+    [0.11, 49.49], // Le Havre
     [-0.36, 49.18], // Caen
     [-0.90, 49.35], // base Cotentin est
     [-1.26, 49.67], // Barfleur
@@ -1601,7 +1585,8 @@ class _FrancePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     double px(double lon) => (lon - _lonMin) / (_lonMax - _lonMin) * size.width;
-    double py(double lat) => (_latMax - lat) / (_latMax - _latMin) * size.height;
+    double py(double lat) =>
+        (_latMax - lat) / (_latMax - _latMin) * size.height;
 
     // Mer
     canvas.drawRect(
@@ -1614,7 +1599,10 @@ class _FrancePainter extends CustomPainter {
     for (int i = 0; i < _border.length; i++) {
       final x = px(_border[i][0]);
       final y = py(_border[i][1]);
-      if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
+      if (i == 0)
+        path.moveTo(x, y);
+      else
+        path.lineTo(x, y);
     }
     path.close();
 
