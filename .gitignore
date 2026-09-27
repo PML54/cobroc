@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Outils tiers (agents de code) — non lié au projet
+.codex/
