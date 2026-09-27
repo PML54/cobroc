@@ -1,5 +1,5 @@
 # cobroc-server
-<!-- Dernière modification : 2026-06-29 -->
+<!-- Dernière modification : 2026-09-27 -->
 
 Serveur REST local pour la base **historibroc** — historique des visites de brocantes de PML et FRA.  
 Objectif principal : partager et modifier la base depuis n'importe quelle machine du réseau local.
@@ -212,6 +212,31 @@ Points clés de `scripts/export_dart.py` :
 - Ces champs sont **transportés** dans les objets `Historic` et **affichés** dans la
   vue d'une visite (`lib/histeric.dart`, badges conditionnels heure/pluie/endroit).
 - Valider le fichier généré : `cd .. && dart analyze lib/historibroc.dart`.
+
+## ⚠️ Bonne pratique — committer la base AVANT toute session cloud (leçon apprise)
+
+La base `db/historibroc.db` est **versionnée dans git**, mais les saisies faites via
+l'appli web s'y écrivent **sans commit automatique**. Une base modifiée mais **non
+committée** est une simple modif de la copie de travail — donc candidate à un
+`git stash`.
+
+**Incident du 2026-09-27 (à ne pas reproduire).** Un lancement de *Claude Code on the
+web* a déclenché une **téléportation** du repo vers le cloud. Pour partir d'une copie
+de travail propre, la téléportation a fait un **`git stash` automatique**
+(« Teleport auto-stash ») : la base avec toutes les visites de l'été (25/07 → 20/09)
+est partie dans le stash, et la copie de travail est revenue au **dernier commit de la
+base (21 juillet)**. Résultat : trou apparent 19/07 → aujourd'hui dans la base live.
+Données **récupérées** depuis `stash@{0}` (`git show 'stash@{0}:server/db/historibroc.db'`),
+fusionnées avec les saisies du jour, puis **la base a été committée** pour la rendre durable.
+
+**Règles :**
+- **Committer la base avant toute session cloud / téléportation** :
+  `git add server/db/historibroc.db && git commit -m "data: snapshot base avant session cloud"`.
+  Une fois committée, elle n'est plus concernée par un stash/téléportation.
+- Committer aussi **régulièrement** après une série de saisies (la base est la source de vérité).
+- **Réflexe de récupération** après une manip git suspecte : `git stash list`. Si un
+  « auto-stash » traîne, les modifs perdues y sont probablement — extraire sans écraser
+  la base live via `git show 'stash@{0}:server/db/historibroc.db' > /tmp/x.db` puis inspecter/fusionner.
 
 ## Migrations automatiques
 
