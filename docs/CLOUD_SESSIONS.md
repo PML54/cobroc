@@ -1,0 +1,96 @@
+# Sessions Claude Code cloud — cobroc
+
+But : exécuter cobroc en **session cloud Claude Code** (claude.ai/code) pour
+`flutter analyze` / `flutter test` **et** l'outillage `server/` Python. Le cloud
+sert à **éditer / analyser / tester**, PAS à lancer l'app (pas d'appareil ni
+d'émulateur) ni à valider le ressenti d'un geste : ça reste sur le Mac.
+
+Le montage tient en **deux pièces** qui se répartissent le travail comme le
+recommande la doc Claude Code (setup script = provisionner la VM ; SessionStart
+hook = résoudre les dépendances du projet).
+
+## Pièce A — Setup script (config de l'*environment*, UI web)
+
+À coller dans le champ **Setup script** de l'environnement cloud
+(claude.ai/code → environnement → réglages). Il n'est **pas** versionné : il vit
+dans la config de l'environnement. Il installe ce qui n'est pas pré-installé
+(Flutter) et prépare le venv Python (le runtime Python, lui, est déjà présent).
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+# --- Flutter (dernière stable) ---
+FLUTTER_DIR="$HOME/flutter"
+if [ ! -x "$FLUTTER_DIR/bin/flutter" ]; then
+  git clone --depth 1 -b stable https://github.com/flutter/flutter.git "$FLUTTER_DIR"
+fi
+
+# --- venv Python pour server/ : HORS du repo ---
+# Le repo est recloné à neuf chaque session ; un venv dans server/ serait perdu.
+# Placé dans $HOME, il entre dans le snapshot de cache et survit.
+VENV="$HOME/.venv-cobroc"
+[ -d "$VENV" ] || python3 -m venv "$VENV"
+"$VENV/bin/pip" install -q --upgrade pip
+# pip install des deps ICI seulement si le repo est déjà cloné à ce stade ;
+# sinon le SessionStart hook s'en charge (voir Pièce B).
+[ -f server/requirements.txt ] && "$VENV/bin/pip" install -q -r server/requirements.txt || true
+
+# PATH pour les shells de la session (idempotent) : chaque commande Bash de
+# Claude source ~/.bashrc, donc flutter/dart et le venv y deviennent visibles.
+LINE='export PATH="$HOME/flutter/bin:$HOME/.venv-cobroc/bin:$PATH"'
+grep -qxF "$LINE" "$HOME/.bashrc" 2>/dev/null || echo "$LINE" >> "$HOME/.bashrc"
+export PATH="$FLUTTER_DIR/bin:$VENV/bin:$PATH"
+
+flutter config --no-analytics >/dev/null 2>&1 || true
+flutter --version
+```
+
+## Pièce B — SessionStart hook (`.claude/settings.json`, versionné)
+
+Déjà en place dans ce dépôt. Deux commandes s'y exécutent au démarrage :
+
+1. **Flutter** (préexistant) : si `flutter` est sur le PATH → `flutter pub get`
+   quand `.dart_tool` manque, puis rappel « lancer analyze/test avant de
+   présenter un diff ». Sinon, avertissement : flutter absent = installer via la
+   Pièce A (le PATH d'un sous-process du hook ne remonte pas ; c'est `.bashrc`,
+   écrit par le setup script, qui rend flutter persistant).
+2. **server/ Python** (ajout) : **uniquement en cloud** (garde
+   `CLAUDE_CODE_REMOTE_SESSION_ID`, pour ne pas polluer le Mac). Crée le venv
+   `$HOME/.venv-cobroc` si absent, `pip install -r server/requirements.txt`,
+   puis signale que les scripts se lancent via `$HOME/.venv-cobroc/bin/python`
+   (le venv n'est PAS sur le PATH par défaut dans le hook).
+
+## Réseau — laisser **Trusted** (ne pas passer en Custom)
+
+Le niveau **Trusted** (défaut) autorise les package registries + GitHub → le
+clone Flutter et `pip`/pub.dev passent. Il **n'inclut pas** `brocabrac.fr` ni les
+sources datatourisme : elles sont **injoignables par construction**. C'est un
+alignement direct avec le gel légal (cf. `CLAUDE.md`) : ne PAS basculer en
+**Custom** pour rendre ces domaines joignables tant que la question des droits
+n'est pas tranchée.
+
+## Secrets — validateur `server/agent/validator.py`
+
+- La majorité de l'outillage (`export_dart.py`, migrations) : **aucun secret,
+  aucun réseau** hors PyPI. `server/db/historibroc.db` est versionnée → présente.
+- Le validateur appelle l'**API Anthropic** (clé dans `server/.env`, gitignoré).
+  En cloud (Pro/Max) : fournir la clé en **API credential** sur l'environnement,
+  hôte `api.anthropic.com` — l'agent proxy l'attache après la sortie de la VM, la
+  session ne la voit jamais. **Jamais** en variable d'environnement (lisible par
+  quiconque utilise l'environnement). **Jamais** committer `server/.env`.
+
+## Point fragile à connaître — couplage de chemins
+
+Pièce A et Pièce B partagent en dur `$HOME/flutter` et `$HOME/.venv-cobroc`. Si
+l'un de ces chemins change dans le setup script, **mettre à jour le hook en
+même temps**. C'est le seul couplage implicite du montage.
+
+## Limites assumées
+
+- **Cache ~5 min** : le setup script n'est mis en cache (snapshot réutilisé
+  ~7 jours) que s'il finit sous ~5 min. Clone Flutter + Dart SDK est le facteur
+  limitant ; s'il dépasse, ça marche mais le script se rejoue chaque session
+  (démarrage lent). Vérifier au premier démarrage (`check-tools`, chrono).
+- **Pas d'exécution d'app** : ni rendu UI ni geste ; uniquement analyze/test et
+  scripts Python.
