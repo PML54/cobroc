@@ -1,9 +1,24 @@
 # Suivi des sessions avec Claude
-<!-- Dernière modification : 2026-06-29 -->
+<!-- Dernière modification : 2026-09-27 -->
 
 > Ce fichier est le point d'entrée pour reprendre le travail avec Claude.
 > À lire en début de session, à mettre à jour en fin de session.
 > Convention : section `## Session AAAA-MM-JJ` par session, la plus récente en tête.
+
+---
+
+## Session 2026-09-27
+
+### ✅ Fait
+
+- **Abandon DATAtourisme + videgrenier** (décision PML : « je n'en veux plus »). Supprimés :
+  - `server/scripts/datatourisme_brocantes.py`
+  - `server/scripts/videgrenier.py`
+  - `datatourisme.md`
+  - variables `DATATOURISME_FLOW_ID` / `DATATOURISME_APP_KEY` de `server/.env.example`
+- Notes « brocabrac.fr et datatourisme injoignables par design » **conservées** dans
+  `.claude/settings.json` et `docs/CLOUD_SESSIONS.md` (garde-fou réseau / gel légal,
+  indépendant des scripts abandonnés).
 
 ---
 
@@ -39,13 +54,9 @@
 
 ### ⏭️ En attente / à faire
 
-- **DATAtourisme** : flux `cobroc-flux` (`fc4aa6312d18f42f438d0780a99e97ac`) à (ré)activer sur `diffuseur.datatourisme.fr` — génération désactivée pour inactivité (HTTP 503 depuis le 18/06)
-- **`server/scripts/videgrenier.py`** : brouillon inutilisable (robots.txt interdit le scraping) → à supprimer
+- ~~**DATAtourisme** : flux à réactiver~~ → **abandonné** (voir session 2026-09-27)
+- ~~**`server/scripts/videgrenier.py`** : à supprimer~~ → **fait/abandonné** (voir session 2026-09-27)
 - **Commit** : les dernières modifs de cette session ne sont pas encore commitées
-
-### ❓ Questions en suspens
-
-- Zone géographique du flux DATAtourisme (Île-de-France ? départements précis ?) — à confirmer sur le portail
 
 ---
 
@@ -73,7 +84,5 @@
 
 `server/.env` (gitignoré) contient :
 - `ANTHROPIC_API_KEY` — validateur agent
-- `DATATOURISME_APP_KEY` — clé DATAtourisme
-- `DATATOURISME_FLOW_ID=fc4aa6312d18f42f438d0780a99e97ac`
 
 Sur nouvelle machine : recréer depuis `.env.example` + `pip install -r requirements.txt` dans `server/`.
