@@ -50,6 +50,21 @@
   }
   .year-select:focus { outline: none; border-color: var(--focus); }
 
+  .nav-btn {
+    padding: 5px 11px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--primary-dark);
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.15s;
+  }
+  .nav-btn:hover:not(:disabled) { background: #ede8e0; }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+
   .card {
     background: var(--card);
     border-radius: var(--radius);
@@ -541,6 +556,18 @@
   #recentPanel .rp-note    { font-size: 0.82rem; color: #e8a020; flex-shrink: 0; }
   #recentPanel .rp-avis    { font-size: 0.78rem; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #recentPanel .rp-pending { font-size: 0.72rem; color: var(--muted); flex-shrink: 0; }
+
+  /* Visite beneficiaire : total revendu > total depense (champ `vendu` du detail) */
+  #recentPanel .rp-item.rp-gain .rp-ville { color: #1b7f3b; }
+  #recentPanel .rp-item.rp-gain:hover { background: #eef7f0; }
+  #recentPanel .rp-marge {
+    font-size: 0.78rem; font-weight: 600; color: #1b7f3b;
+    flex-shrink: 0; white-space: nowrap;
+  }
+  /* Visite deficitaire : total revendu < total depense → marge en rouge */
+  #recentPanel .rp-item.rp-perte .rp-ville { color: var(--danger); }
+  #recentPanel .rp-item.rp-perte:hover { background: #faeceb; }
+  #recentPanel .rp-marge.rp-marge-perte { color: var(--danger); }
 </style>
 </head>
 <body>
@@ -549,6 +576,8 @@
   <select id="yearSelect" class="year-select"></select>
   <a class="recent-btn" id="lieuxBtn" href="/static/lieux.html" title="Gérer les lieux">📍</a>
   <button type="button" class="recent-btn" id="recentBtn" title="Visites de l'année">🕐</button>
+  <button type="button" class="nav-btn" id="navPrev" title="Visite précédente (date plus récente)" style="display:none">‹</button>
+  <button type="button" class="nav-btn" id="navNext" title="Visite suivante (date plus ancienne)" style="display:none">›</button>
 </div>
 
 <div id="recentPanel">
@@ -701,6 +730,8 @@ let selectedGood = 0;
 let selectedOrdre = 1;
 let selectedLieuId = null; // id du lieu sélectionné dans le dropdown, null si nouveau
 let editingId = null;      // id de la visite en cours de modification, null si création
+let recentItems = [];      // liste courante du panel (pour navigation ‹ ›)
+let currentNavIndex = -1;  // index de l'entrée affichée dans recentItems
 let debounceTimer = null;
 let dropFocused = -1;
 let dropItems = [];
@@ -738,7 +769,7 @@ function fillAchatsFromDetail(detail) {
   });
 }
 
-async function loadEntry(id) {
+async function loadEntry(id, navIndex = -1) {
   try {
     const res = await fetch(`/historic/${id}`);
     if (!res.ok) { showFeedback('error', 'Visite introuvable.'); return; }
@@ -780,7 +811,7 @@ async function loadEntry(id) {
     document.getElementById('hist_avis').value       = d.hist_avis || '';
     fillAchatsFromDetail(d.hist_detail);
 
-    enterEditMode(d.id);
+    enterEditMode(d.id, navIndex);
     updateSubmitBtn();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
@@ -788,15 +819,44 @@ async function loadEntry(id) {
   }
 }
 
-function enterEditMode(id) {
+function enterEditMode(id, navIndex = -1) {
   editingId = id;
+  currentNavIndex = navIndex;
   document.getElementById('submitBtn').textContent = 'Mettre à jour';
+  updateNavBtns();
 }
 
 function exitEditMode() {
   editingId = null;
+  currentNavIndex = -1;
   document.getElementById('submitBtn').textContent = 'Enregistrer';
+  updateNavBtns();
 }
+
+function updateNavBtns() {
+  const prev = document.getElementById('navPrev');
+  const next = document.getElementById('navNext');
+  const visible = editingId !== null && recentItems.length > 0 && currentNavIndex >= 0;
+  prev.style.display = visible ? '' : 'none';
+  next.style.display = visible ? '' : 'none';
+  if (visible) {
+    prev.disabled = currentNavIndex <= 0;
+    next.disabled = currentNavIndex >= recentItems.length - 1;
+  }
+}
+
+document.getElementById('navPrev').addEventListener('click', () => {
+  if (currentNavIndex > 0) {
+    const item = recentItems[currentNavIndex - 1];
+    loadEntry(item.id, currentNavIndex - 1);
+  }
+});
+document.getElementById('navNext').addEventListener('click', () => {
+  if (currentNavIndex < recentItems.length - 1) {
+    const item = recentItems[currentNavIndex + 1];
+    loadEntry(item.id, currentNavIndex + 1);
+  }
+});
 
 
 // ── Ordre (stepper) ────────────────────────────────────────────────────────
@@ -1166,6 +1226,27 @@ recentBtn.addEventListener('click', async () => {
   await openRecentPanel();
 });
 
+// Marge d'une visite = somme des `vendu` - somme des prix d'achat.
+// Format d'un item : "desc=prix€|avis|vendu" — le vendu peut etre negatif
+// (objet revendu a perte / jete) ou absent/0 (non revendu, compte pour 0).
+// `revendu` = au moins un objet effectivement revendu (vendu non nul) : c'est
+// ce flag qui rend la marge significative (une visite tout-en-perte a une vente
+// negative, donc `vente > 0` ne suffit pas a detecter les deficits).
+function margeVisite(detail) {
+  let achat = 0, vente = 0, revendu = false;
+  (detail || '').split('+').forEach(part => {
+    const [item, , vendu = ''] = part.split('|');
+    const m = item.match(/=(\d+)€\s*$/);
+    if (m) achat += parseInt(m[1], 10);
+    const v = parseInt(vendu, 10);
+    if (!isNaN(v)) {
+      vente += v;
+      if (v !== 0) revendu = true;
+    }
+  });
+  return { achat, vente, marge: vente - achat, revendu };
+}
+
 async function openRecentPanel() {
   recentList.innerHTML = '<div style="padding:12px 14px;color:var(--muted);font-size:0.9rem">Chargement…</div>';
   recentPanel.classList.add('open');
@@ -1175,6 +1256,7 @@ async function openRecentPanel() {
     document.getElementById('recentHeader').textContent = `Visites ${annee}`;
     const res  = await fetch(`/historic?sort=date_desc&limit=500&year=${annee}`);
     const data = await res.json();
+    recentItems = data;   // mémorise pour navigation ‹ ›
     recentList.innerHTML = '';
     data.forEach(item => {
       const div  = document.createElement('div');
@@ -1183,17 +1265,26 @@ async function openRecentPanel() {
       const pending = item.validated ? '' : '<span class="rp-pending">⏳</span>';
       const lieu    = item.hist_adresse ? escapeHtml(item.hist_adresse) : '';
       const expo    = item.hist_nb_expo ? `${item.hist_nb_expo} exp.` : '';
+      const { marge, revendu } = margeVisite(item.hist_detail);
+      // Benefice / deficit ne sont pertinents que si au moins un objet a ete revendu.
+      const beneficiaire = revendu && marge > 0;
+      const deficitaire  = revendu && marge < 0;
+      if (beneficiaire) div.classList.add('rp-gain');
+      else if (deficitaire) div.classList.add('rp-perte');
       div.innerHTML = `
         <span class="rp-date">${item.hist_date}</span>
         <span class="rp-name">${item.hist_name}</span>
         <span class="rp-ville">${escapeHtml(item.hist_ville)}</span>
         ${lieu ? `<span class="rp-lieu">${lieu}</span>` : ''}
         ${expo ? `<span class="rp-expo">${expo}</span>` : ''}
+        ${beneficiaire ? `<span class="rp-marge">+${marge}€</span>` : ''}
+        ${deficitaire  ? `<span class="rp-marge rp-marge-perte">${marge}€</span>` : ''}
         <span class="rp-note">${note}</span>
         ${item.hist_avis ? `<span class="rp-avis">${escapeHtml(item.hist_avis)}</span>` : ''}
         ${pending}
       `;
-      div.addEventListener('click', () => { loadEntry(item.id); closeRecentPanel(); });
+      const idx = recentItems.indexOf(item);
+      div.addEventListener('click', () => { loadEntry(item.id, idx); closeRecentPanel(); });
       recentList.appendChild(div);
     });
     if (!data.length) {
@@ -1215,7 +1306,16 @@ document.addEventListener('click', e => {
 
 // Escape déjà géré globalement — on y ajoute closeRecentPanel
 const _origKeydown = document.onkeydown;
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRecentPanel(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeRecentPanel();
+  // Navigation ‹ › au clavier (seulement hors champ de saisie)
+  if (editingId !== null && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) {
+    if (e.key === 'ArrowLeft'  && currentNavIndex > 0)
+      loadEntry(recentItems[currentNavIndex - 1].id, currentNavIndex - 1);
+    if (e.key === 'ArrowRight' && currentNavIndex < recentItems.length - 1)
+      loadEntry(recentItems[currentNavIndex + 1].id, currentNavIndex + 1);
+  }
+});
 
 // ── Reset ──────────────────────────────────────────────────────────────────
 function resetForm() {
