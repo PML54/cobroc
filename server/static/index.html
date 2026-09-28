@@ -1302,8 +1302,13 @@ function renderBilan(data) {
     b[who].dep += achat;
     b[who].rec += vente;
   });
-  const ligne = (nom, o) =>
-    `<span><span class="who">${nom}</span>Dép. <span class="dep">${o.dep}€</span> · Rec. <span class="rec">${o.rec}€</span></span>`;
+  const ligne = (nom, o) => {
+    // Rentabilité = gain (Recettes − Dépenses) / Dépenses, arrondie à l'entier.
+    const rent = o.dep > 0 ? Math.round((o.rec - o.dep) / o.dep * 100) : null;
+    const rentTxt = rent === null ? '—' : `${rent}%`;
+    const rentCls = rent === null ? '' : (rent >= 0 ? 'rec' : 'dep');
+    return `<span><span class="who">${nom}</span>Dép. <span class="dep">${o.dep}€</span> · Rec. <span class="rec">${o.rec}€</span> · Rent. <span class="${rentCls}" title="Rentabilité (gain/dépenses)">${rentTxt}</span></span>`;
+  };
   document.getElementById('recentBilan').innerHTML = ligne('PML', b.PML) + ligne('FRA', b.FRA);
 }
 
