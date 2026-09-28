@@ -1,7 +1,7 @@
 // lib/historibroc.dart
-// Modified: 2609271953
+// Modified: 2609280638
 // Historic — liste des brocantes visitées
-// CHANGEMENTS: (1) Export automatique depuis SQLite — 2265 entrées validées
+// CHANGEMENTS: (1) Champ optionnel `duo` (trajet à 2, une voiture) ligne 32 + constructeur ligne ~53 — synchronisé avec export_dart.py
 
 import 'package:cobroc/diverspml.dart';
 import 'package:diacritic/diacritic.dart';
@@ -30,6 +30,7 @@ class Historic {
   int rues = 0;
   int stade = 0;
   int espace = 0;
+  int duo = 0;          // trajet à 2 dans une seule voiture (frais essence partagés)
 
   Historic(
       this.histName,
@@ -51,6 +52,7 @@ class Historic {
       this.rues = 0,
       this.stade = 0,
       this.espace = 0,
+      this.duo = 0,
       }) {
     BreakDate bri = BreakDate(histDate);
     histCheckDate = bri.checkDate;

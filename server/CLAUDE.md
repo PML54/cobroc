@@ -103,6 +103,7 @@ requirements.txt                    # fastapi, uvicorn, anthropic, python-dotenv
 | `qualite_agreable` | INTEGER 0/1 | Qualité : agréable |
 | `qualite_non_signalee` | INTEGER 0/1 | Qualité : non signalée |
 | `qualite_a_faire_a_2` | INTEGER 0/1 | Qualité : à faire à 2 |
+| `duo` | INTEGER 0/1 | Trajet à 2 dans une seule voiture (marqueur pour futur calcul des frais d'essence) |
 
 ## Routes API
 

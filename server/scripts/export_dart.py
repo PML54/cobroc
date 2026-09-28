@@ -83,6 +83,7 @@ def generate_dart(db_path: Path) -> str:
         "  int rues = 0;",
         "  int stade = 0;",
         "  int espace = 0;",
+        "  int duo = 0;          // trajet à 2 dans une seule voiture (frais essence partagés)",
         "",
         "  Historic(",
         "      this.histName,",
@@ -104,6 +105,7 @@ def generate_dart(db_path: Path) -> str:
         "      this.rues = 0,",
         "      this.stade = 0,",
         "      this.espace = 0,",
+        "      this.duo = 0,",
         "      }) {",
         "    BreakDate bri = BreakDate(histDate);",
         "    histCheckDate = bri.checkDate;",
@@ -167,6 +169,8 @@ def generate_dart(db_path: Path) -> str:
             extras.append("stade: 1")
         if row["espace"]:
             extras.append("espace: 1")
+        if row["duo"]:
+            extras.append("duo: 1")
         extra_str = (", " + ", ".join(extras)) if extras else ""
 
         lines.append(

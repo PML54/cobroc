@@ -666,6 +666,7 @@
     <div class="cond-group">
       <label class="chk"><input type="checkbox" id="chk_pluie"> Pluie</label>
       <label class="chk"><input type="checkbox" id="chk_tard"> Arrivée trop tard</label>
+      <label class="chk"><input type="checkbox" id="chk_duo"> Duo (même voiture)</label>
     </div>
 
     <label style="margin-top:14px">Endroit</label>
@@ -784,6 +785,7 @@ async function loadEntry(id, navIndex = -1) {
     document.getElementById('heure_arrivee').value = d.heure_arrivee || '';
     document.getElementById('chk_pluie').checked   = d.pluie === 1;
     document.getElementById('chk_tard').checked    = d.arrivee_tard === 1;
+    document.getElementById('chk_duo').checked     = d.duo === 1;
     setOrdre(d.ordre || 1);
     document.getElementById('chk_parking').checked = d.endroit_parking === 1;
     document.getElementById('chk_champ').checked   = d.endroit_champ   === 1;
@@ -1149,6 +1151,7 @@ document.getElementById('mainForm').addEventListener('submit', async e => {
     heure_arrivee:    document.getElementById('heure_arrivee').value,
     pluie:            document.getElementById('chk_pluie').checked    ? 1 : 0,
     arrivee_tard:     document.getElementById('chk_tard').checked     ? 1 : 0,
+    duo:              document.getElementById('chk_duo').checked      ? 1 : 0,
     ordre:            selectedOrdre,
     endroit_parking:  document.getElementById('chk_parking').checked  ? 1 : 0,
     endroit_champ:    document.getElementById('chk_champ').checked    ? 1 : 0,
@@ -1337,6 +1340,7 @@ function resetForm() {
   });
   document.getElementById('chk_pluie').checked   = false;
   document.getElementById('chk_tard').checked    = false;
+  document.getElementById('chk_duo').checked     = false;
   document.getElementById('chk_parking').checked = false;
   document.getElementById('chk_champ').checked   = false;
   document.getElementById('chk_stade').checked   = false;
