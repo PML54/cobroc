@@ -91,6 +91,18 @@ formulaire web** pendant la session (pas par l'assistant) : id 2288 `nb_expo`
 perte. Committée (règle « committer la base régulièrement »). ⚠️ Rappel : la base
 change dès qu'on saisit sur le LAN — vérifier `git status` avant/après.
 
+**8. Réconciliation double implémentation « duo »** (`merge de59986`). Une **session
+cloud** (branche `claude/cobroc-duo-option-p1z8qj`, PR #1/#2 déjà mergées sur `main`)
+avait fait le flag `duo` **en parallèle** de la version locale → `push` refusé
+(divergence ahead/behind). Colonne `duo` identique des deux côtés. Choix de merge :
+- **UI** : on garde la **case à cocher** locale « Duo (même voiture) » (intégrée à la
+  refonte) ; la **bascule Non/Oui** du cloud est écartée (évite le doublon d'UI —
+  l'auto-merge textuel avait produit les 2 contrôles + 2 clés `duo` = JS cassé).
+- `export_dart.py` : robustesse cloud adoptée (`"duo" in row.keys()`, base non migrée tolérée).
+- `schema.sql` : version cloud (duo au DDL). `historibroc.db` : **locale** (plus récente).
+- **Leçon** : deux sessions (locale + cloud) sur la même feature = divergence garantie.
+  Vérifier `git fetch` / l'état des PR avant de lancer un chantier déjà pris côté cloud.
+
 ### 🧠 Leçons cloud (à coût ~nul cette fois)
 
 - Un commit **non poussé** dans une VM cloud éphémère est **perdu** quand la session
