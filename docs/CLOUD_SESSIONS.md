@@ -184,3 +184,32 @@ une session `--cloud` *démarre* de l'état de la branche courante sur le remote
 ses propres commits (nouveaux SHA). Aucun de ces SHA n'a de rapport avec l'ID de
 session. Retrouver une session → **ID de session** ; savoir de quel code elle part
 → **SHA du dernier commit poussé** de la branche.
+
+## PR et CI — concepts et pertinence pour cobroc
+
+Termes rencontrés autour de l'App GitHub (auto-fix, `@claude` sur PR).
+
+**PR — Pull Request** (« demande de fusion »). Proposition de fusionner une
+branche dans une autre (typiquement `feature` → `main`) **avec revue avant merge** :
+diff affiché, commentaires ligne par ligne, approbation, puis merge. C'est la
+**code review formalisée + garde-barrière**. GitLab dit « Merge Request (MR) ».
+
+**CI — Continuous Integration** (« intégration continue »). **Pipeline automatique**
+déclenché à chaque push/PR sur une machine distante : build, tests, lint. Sur GitHub
+= **GitHub Actions** (`.github/workflows/*.yml`). Analogie sysadmin : un **cron de
+build-and-test hébergé**, déclenché par un événement git au lieu d'une horloge.
+
+**Combinés** : sur une PR, la CI tourne et **bloque le merge** tant que build/tests
+échouent → garde-barrière automatisé. C'est ce que l'**auto-fix** de l'App Claude
+exploite (réagit aux échecs CI + commentaires de PR).
+
+**Pertinence pour cobroc (fait + opinion)** :
+- État actuel : commits **directs sur `main`**, **pas de PR**, **pas de CI**
+  (aucun `.github/workflows/`), vérif qualité **manuelle** sur le Mac.
+- **PR** : faible intérêt en **solo** (on est son propre relecteur) — surtout utile
+  en équipe / pour protéger `main`.
+- **CI** : intérêt réel *possible* même solo (filet `flutter analyze` + tests auto),
+  MAIS deux bémols cobroc : (1) installer Flutter dans le runner = lent à maintenir ;
+  (2) **gel légal** — une CI qui build l'app entière frôle la « préparation de
+  publication » que `CLAUDE.md` proscrit. Une CI *minimale* (analyze + tests Python,
+  sans build d'app) serait le compromis sans risque, si un jour souhaité.
