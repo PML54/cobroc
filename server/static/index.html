@@ -90,11 +90,11 @@
   }
 
   .toggle-btn {
-    padding: 14px;
-    border: 2px solid var(--border);
+    padding: 7px;
+    border: 1.5px solid var(--border);
     border-radius: var(--radius);
     background: transparent;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.15s;
@@ -651,24 +651,20 @@
   <div class="card">
     <div class="row4">
       <div>
-        <label for="hist_date">Date</label>
-        <input type="date" id="hist_date" required style="width:100%">
+        <input type="date" id="hist_date" required title="Date de la visite" style="width:100%">
       </div>
       <div>
-        <label for="heure_arrivee">Heure</label>
-        <input type="time" id="heure_arrivee" autocomplete="off" style="width:100%">
+        <input type="time" id="heure_arrivee" autocomplete="off" title="Heure d'arrivée" style="width:100%">
       </div>
       <div>
-        <label>Ordre</label>
-        <div class="ordre-stepper">
+        <div class="ordre-stepper" title="Ordre de visite dans la journée">
           <button type="button" id="ordre-minus">−</button>
           <span class="ordre-val" id="ordre-display">1</span>
           <button type="button" id="ordre-plus">+</button>
         </div>
       </div>
       <div>
-        <label>Note</label>
-        <div class="stars" id="stars">
+        <div class="stars" id="stars" title="Note">
           <span class="star" data-v="1">★</span>
           <span class="star" data-v="2">★</span>
           <span class="star" data-v="3">★</span>
@@ -724,8 +720,7 @@
   <div class="card">
     <textarea id="hist_avis" placeholder="Avis — notes de visite, conseils, observations…"></textarea>
 
-    <div class="section-title" style="margin-top:14px">Détail des achats</div>
-    <div id="achats-list"></div>
+    <div id="achats-list" style="margin-top:14px"></div>
     <button type="button" class="add-achat" id="addAchat">＋ Ajouter un objet</button>
   </div>
 
