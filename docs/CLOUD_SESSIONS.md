@@ -139,3 +139,31 @@ depuis un checkout du **même** repo (pas un fork). Après teleport, le lien est
 coupé : la copie locale n'alimente plus la session cloud (pour re-piloter depuis
 le mobile, lancer `/remote-control`). Ne pas confondre `--teleport` (session
 cloud + branche) avec `--resume` (historique purement local).
+
+### Constat empirique 2026-09-28 — ce repo part en *bundle*, pas en clone
+
+Vérifié en session : `claude --cloud` depuis ce dépôt crée la VM par
+`git clone /home/user/.seed.bundle` (bundle local téléversé), **pas** par un
+clone réseau de `origin`. Conséquences observées :
+
+- `git remote -v` **vide** dans la VM, aucune branche `remotes/origin/*` ;
+- historique **complet** quand même (bundle = tout le repo, pas un shallow) ;
+- **impossible de `git push`** tel quel : il faut d'abord
+  `git remote add origin https://github.com/PML54/cobroc.git` puis push
+  (le token `/web-setup` a les droits `repo`), sinon le travail non poussé
+  **meurt avec la VM éphémère** (vécu le 27/09 et le 28/09).
+
+Cause probable (à confirmer si on y revient) : la connexion claude.ai ↔ GitHub
+passe par **`/web-setup`** (token `gh`), pour laquelle le provisionnement
+**bundle par défaut**. Installer l'**App GitHub Claude** *sur le repo* est
+nécessaire mais **pas suffisant** — testé le 28/09, ça bundle toujours. Le mode
+clone exigerait de connecter claude.ai **via l'App GitHub** (onboarding web), pas
+via `/web-setup`. À NE PAS confondre avec la policy réseau : le bundling est une
+décision **côté client** (avant démarrage VM), sans rapport avec **Trusted** qui
+ne bloque que `brocabrac.fr`, pas `github.com`.
+
+**Règle pratique tant que c'est en mode bundle** : avant de fermer une session
+cloud, `git remote add origin <url>` + `git push -u origin <branche>` — ou
+récupérer le travail autrement — sinon perte. Et : pour cobroc, le cloud reste un
+**mauvais outil** (gel légal du scraping, Flutter absent de la VM, friction
+bundle) → privilégier le travail **local**.
