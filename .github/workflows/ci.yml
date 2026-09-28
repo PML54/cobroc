@@ -1,0 +1,35 @@
+name: CI
+
+# Déclencheurs : à chaque push et sur chaque PR.
+# paths: limite l'exécution aux changements qui touchent le code serveur
+# (un commit qui ne modifie que des .md ou lib/ ne relance pas la CI).
+on:
+  push:
+    paths:
+      - 'server/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'server/**'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Installer les dépendances serveur
+        run: pip install -r server/requirements.txt
+
+      - name: Lancer les tests serveur
+        working-directory: server
+        run: |
+          for t in tests/test_*.py; do
+            echo "== $t =="
+            python "$t" || exit 1
+          done
