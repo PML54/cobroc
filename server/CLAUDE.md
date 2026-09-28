@@ -210,6 +210,9 @@ Points clés de `scripts/export_dart.py` :
   `parking`/`rues`/`stade`/`espace` via LEFT JOIN `lieux`) sont émis en **paramètres
   nommés optionnels**, et **seulement s'ils sont non-défaut** → les anciennes lignes
   restent inchangées, rétro-compatibles.
+- `duo` (visite faite à 2) est exporté de la même façon (`duo: 1` seulement si Oui).
+  Il est **transporté** dans `Historic` mais **pas encore affiché ni utilisé** côté Flutter.
+  L'export tolère une base non migrée (colonne `duo` absente ⇒ 0).
 - Ces champs sont **transportés** dans les objets `Historic` et **affichés** dans la
   vue d'une visite (`lib/histeric.dart`, badges conditionnels heure/pluie/endroit).
 - Valider le fichier généré : `cd .. && dart analyze lib/historibroc.dart`.
