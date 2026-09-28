@@ -570,6 +570,20 @@
     background: var(--bg);
   }
 
+  /* Bilan Dépenses / Recettes par visiteur (entête du reporting par année) */
+  #recentPanel .rp-bilan {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    background: #faf7f2;
+    border-bottom: 1px solid var(--border);
+  }
+  #recentPanel .rp-bilan .who { font-weight: 700; color: var(--primary-dark); margin-right: 6px; }
+  #recentPanel .rp-bilan .dep { color: var(--danger); }
+  #recentPanel .rp-bilan .rec { color: var(--success); }
+
   #recentPanel .rp-item {
     display: flex;
     align-items: baseline;
@@ -616,6 +630,7 @@
 
 <div id="recentPanel">
   <div class="rp-header" id="recentHeader">Visites de l'année</div>
+  <div class="rp-bilan" id="recentBilan"></div>
   <div id="recentList"></div>
 </div>
 
@@ -1283,6 +1298,20 @@ function margeVisite(detail) {
   return { achat, vente, marge: vente - achat, revendu };
 }
 
+// Bilan par visiteur : Dépenses (champ dépense du visiteur) + Recettes (revendu du détail).
+// La règle MAISON s'applique aux recettes via margeVisite (objet "MAISON" exclu).
+function renderBilan(data) {
+  const b = { PML: { dep: 0, rec: 0 }, FRA: { dep: 0, rec: 0 } };
+  data.forEach(item => {
+    const who = item.hist_name === 'FRA' ? 'FRA' : 'PML';
+    b[who].dep += who === 'PML' ? (item.hist_pml_dep || 0) : (item.hist_fra_dep || 0);
+    b[who].rec += margeVisite(item.hist_detail).vente;
+  });
+  const ligne = (nom, o) =>
+    `<span><span class="who">${nom}</span>Dép. <span class="dep">${o.dep}€</span> · Rec. <span class="rec">${o.rec}€</span></span>`;
+  document.getElementById('recentBilan').innerHTML = ligne('PML', b.PML) + ligne('FRA', b.FRA);
+}
+
 async function openRecentPanel() {
   recentList.innerHTML = '<div style="padding:12px 14px;color:var(--muted);font-size:0.9rem">Chargement…</div>';
   recentPanel.classList.add('open');
@@ -1293,6 +1322,7 @@ async function openRecentPanel() {
     const res  = await fetch(`/historic?sort=date_desc&limit=500&year=${annee}`);
     const data = await res.json();
     recentItems = data;   // mémorise pour navigation ‹ ›
+    renderBilan(data);
     recentList.innerHTML = '';
     data.forEach(item => {
       const div  = document.createElement('div');
