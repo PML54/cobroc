@@ -9,7 +9,19 @@ import re
 import unicodedata
 from anthropic import Anthropic
 
-_client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+# Lazy init : le client Anthropic n'est construit qu'au premier appel réel
+# d'inference (via _get_client), pas à l'import du module. Ça évite d'exiger
+# ANTHROPIC_API_KEY dès l'import — les fonctions pures (_is_true_duplicate,
+# _norm_ville) restent importables et testables sans clé ni réseau.
+_client: Anthropic | None = None
+
+
+def _get_client() -> Anthropic:
+    """Retourne le client Anthropic, construit à la demande (une seule fois)."""
+    global _client
+    if _client is None:
+        _client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    return _client
 
 
 def _norm_ville(v: str) -> str:
@@ -90,7 +102,7 @@ def validate_entry(entry: dict, existing_entries: list[dict]) -> dict:
         "existing_entries_sample": existing_entries[:20],  # contexte limité
     }
 
-    response = _client.messages.create(
+    response = _get_client().messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=512,
         system=_SYSTEM,

@@ -6,12 +6,10 @@ d'un vrai doublon (même hist_name + hist_date + hist_ville normalisée).
 Exécution : depuis server/  ->  .venv/bin/python tests/test_is_true_duplicate.py
 (ou, en cloud : $HOME/.venv-cobroc/bin/python server/tests/test_is_true_duplicate.py)
 
-RUSTINE ASSUMÉE : validator.py construit un client Anthropic au niveau module
-(_client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])). Importer une
-fonction pure oblige donc à (a) poser ANTHROPIC_API_KEY et (b) avoir le package
-anthropic installé. Le setdefault ci-dessous DOIT rester AVANT l'import de
-validator : c'est fragile (dépendance à l'ordre d'import). Le fix propre serait
-un lazy init du client dans validator.py — chantier séparé, non fait ici.
+Depuis le lazy init du client Anthropic (validator._get_client), importer une
+fonction pure n'exige PLUS de clé ANTHROPIC_API_KEY : le client n'est construit
+qu'au premier appel réel d'inference. Le package anthropic reste requis (import
+du module). Plus de rustine setdefault ici.
 """
 
 import os
@@ -21,9 +19,6 @@ import sys
 _SERVER_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _SERVER_DIR not in sys.path:
     sys.path.insert(0, _SERVER_DIR)
-
-# Doit précéder l'import de validator (cf. RUSTINE ASSUMÉE ci-dessus).
-os.environ.setdefault("ANTHROPIC_API_KEY", "test-dummy-key")
 
 from agent.validator import _is_true_duplicate  # noqa: E402
 
