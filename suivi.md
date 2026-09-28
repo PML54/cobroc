@@ -103,6 +103,26 @@ avait fait le flag `duo` **en parallèle** de la version locale → `push` refus
 - **Leçon** : deux sessions (locale + cloud) sur la même feature = divergence garantie.
   Vérifier `git fetch` / l'état des PR avant de lancer un chantier déjà pris côté cloud.
 
+**9. Bilan Dépenses/Recettes/Rentabilité en entête du reporting par année**
+(`feat`, `static/index.html` · `renderBilan`). Le panneau 🕐 affiche par visiteur :
+Dépenses (Σ achats du détail, **MAISON exclu**) · Recettes (Σ revendu) · **Rentabilité**
+= Recettes/Dépenses arrondie à l'entier (positive — les achats vont au stock ou sont
+revendus ; « — » si Dép. = 0). Vérifié en page = contrôle indépendant.
+
+**10. Compacité du formulaire** (série de `style`, `static/index.html`). Retrait des
+labels au-dessus des champs (Ville/CP/Adresse, Avis, Endroit, Nb exposants, Date/Heure/
+Ordre/Note) → **placeholders + infobulles** ; boutons **PML/FRA réduits** ; titre
+« Détail des achats » retiré. **Fond bleu clair** distinct sur le bloc achats
+(`#achats-list`) et le champ Avis (`#hist_avis`) pour les détacher du reste.
+
+**11. Migration `duo` appliquée + app régénérée.** Redémarrage du service launchd →
+`_migrate_db()` ajoute la colonne `duo` à la base live (`data 71d? / c442862`). Base
+migrée committée. `export_dart.py` régénère `lib/historibroc.dart` (2265 entrées, `duo`
+transporté, 0 marqué). **Build iOS OK** : `flutter build ios --no-codesign` → `Runner.app`
+54,3 Mo. Reste : installer sur l'iPhone (signature/Xcode ou `flutter run --release`).
+
+**Tout poussé sur `main`** au fil de l'eau (synchro avec `origin/main`).
+
 ### 🧠 Leçons cloud (à coût ~nul cette fois)
 
 - Un commit **non poussé** dans une VM cloud éphémère est **perdu** quand la session
@@ -118,7 +138,8 @@ avait fait le flag `duo` **en parallèle** de la version locale → `push` refus
 `16058b3` doc PR/CI · `46db310` ci.yml (CI minimale) · `<ce commit>` maj suivi (CI en Fait).
 
 ### ⏭️ Reste à faire
-- **Rebuild app Flutter** (`flutter build ios`) — toujours en attente (données iPhone).
+- **Installer l'app sur l'iPhone** : build iOS release **compilé OK** (`--no-codesign`) ;
+  reste l'install signée (Xcode ou `flutter run --release -d <iphone>`).
 - **Mode clone cloud** (optionnel) — reconnecter GitHub via l'App dans les settings
   claude.ai si on veut réutiliser le cloud sérieusement.
 - **Promo crédits cloud** : 250 $ (Max) à réclamer avant le **7 oct.**, expire **4 nov.**

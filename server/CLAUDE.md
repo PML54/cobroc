@@ -135,11 +135,14 @@ Formulaire « Nouvelle visite » servi sur `/` (redirige vers `/static/index.htm
 > toute création ou modification de lieu passe par `lieux.html`.
 
 - **En-tête** : sélecteur d'année (2020 → année courante) + bouton 📍 (page Lieux) + bouton 🕐. Pas de titre de page.
-- **Icône 🕐** : charge `GET /historic?sort=date_desc&year=<annee>&limit=500` — toutes les visites de l'année sélectionnée, triées par date desc puis ville. Chaque ligne : date · visiteur · ville · lieu · nb exposants · étoiles · commentaire tronqué. Clic → mode édition (`PUT /historic/{id}`). C'est le **seul point d'entrée** pour modifier une visite.
-- **Formulaire** : une ligne Date · Heure · Ordre (stepper − n +) · Note (étoiles). Pas de titres de section.
+- **Icône 🕐** (reporting par année) : charge `GET /historic?sort=date_desc&year=<annee>&limit=500` — toutes les visites de l'année, triées par date desc puis ville. Chaque ligne : date · visiteur · ville · lieu · nb exposants · étoiles · commentaire tronqué. Clic → mode édition (`PUT /historic/{id}`). C'est le **seul point d'entrée** pour modifier une visite.
+  - **Bilan en entête** (`renderBilan`) : par visiteur, **Dépenses** (Σ achats du détail, MAISON exclu) · **Recettes** (Σ revendu) · **Rentabilité** = Recettes/Dépenses arrondie à l'entier (toujours positive — les achats vont au stock ou sont revendus ; « — » si Dépenses = 0).
+- **Compacité** : pour gagner de la place, la plupart des libellés au-dessus des champs sont retirés — les champs sont identifiés par **placeholder** (« Ville — chercher un lieu… », « Code postal », « Adresse », « Nb expo. », « Avis — … ») et **infobulle** (Date, Heure, Ordre, Note). Boutons PML/FRA réduits.
+- **Ligne du haut** : Date · Heure · Ordre (stepper − n +) · Note (étoiles), sans labels.
 - **Visiteur** : bascule PML / FRA.
 - **Lieu** : Ville · Code postal · Adresse sur une ligne. Puis **Nb exposants + Conditions** (Pluie / Trop tard / **Duo** « même voiture », cases à cocher) sur une ligne, et **Endroit** (Parking / Champ / Stade / Place / Rues / Salle) sur une ligne.
-- Ordre des rubriques : Avis → **Détail des achats** (toujours affiché) → Qualité → Dépenses.
+- Ordre des rubriques : Avis → **Détail des achats** (toujours affiché, plus de `<details>`) → Qualité → Dépenses.
+- **Fond distinct** : le bloc Détail des achats (`#achats-list`) et le champ Avis (`#hist_avis`) ont un fond bleu clair pour se détacher du reste du formulaire.
 - **Règle MAISON** : un objet du détail dont l'avis vaut `MAISON` (insensible à la casse) n'est pas compté dans les calculs de dépense/marge (`sumAchatsPrix`, `margeVisite`, `somme_detail`).
 - **Endroit** : stocké dans `historic` (`endroit_*`), pas dans `lieux`.
 - **Lieu obligatoire** : le champ Ville est un **pur sélecteur** alimenté par `GET /lieux?ville=…`. Tant qu'aucun lieu n'est sélectionné (`selectedLieuId === null`), le bouton Enregistrer reste grisé. CP et Adresse sont en lecture seule, remplis depuis le lieu.
