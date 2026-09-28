@@ -55,9 +55,24 @@ RE_CANON_ITEM = re.compile(r"^(.+?)=(\d+)€$")
 
 
 def somme_detail(detail: str | None) -> int:
-    """Somme des prix de tous les items qui en portent un. 0 si aucun."""
-    items = [p.partition("|")[0] for p in (detail or "").split("+") if p.strip()]
-    return sum(int(m.group(2)) for m in (RE_CANON_ITEM.match(i) for i in items) if m)
+    """Somme des prix des items qui en portent un, en excluant ceux dont l'avis
+    est "MAISON". 0 si aucun.
+
+    Format d'un item : "desc=prix€|avis|vendu" (| intra-item). Un item dont le
+    segment avis vaut "MAISON" (insensible a la casse) n'est pas compte.
+    """
+    total = 0
+    for p in (detail or "").split("+"):
+        if not p.strip():
+            continue
+        segs = p.split("|")
+        avis = segs[1].strip().upper() if len(segs) > 1 else ""
+        if avis == "MAISON":
+            continue
+        m = RE_CANON_ITEM.match(segs[0])
+        if m:
+            total += int(m.group(2))
+    return total
 
 
 def calculer(row) -> dict | None:

@@ -164,6 +164,13 @@
     gap: 10px;
   }
 
+  /* Ligne Lieu : Ville | Code postal | Adresse (CP plus étroit) */
+  .row-lieu {
+    display: grid;
+    grid-template-columns: 1.3fr 0.7fr 1.4fr;
+    gap: 10px;
+  }
+
   .row4 {
     display: grid;
     grid-template-columns: 185px 135px auto auto;
@@ -419,14 +426,41 @@
   }
   input.ro:focus { border-color: var(--border); background: #efe9e1; }
 
-  /* Groupes de cases à cocher (Endroit, Conditions) */
-  .endroit-group, .cond-group {
-    display: grid;
+  /* Endroit : les 6 cases tiennent sur une seule ligne (largeurs égales, shrink) */
+  .endroit-group {
+    display: flex;
+    gap: 5px;
+    margin-top: 6px;
+  }
+  .endroit-group .chk {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    font-size: 0.75rem;
+    padding: 8px 3px;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  /* Nb exposants + conditions (Pluie / Trop tard / Duo) sur une même ligne */
+  .expo-cond {
+    display: flex;
+    align-items: flex-end;
     gap: 8px;
     margin-top: 6px;
   }
-  .endroit-group { grid-template-columns: repeat(3, 1fr); }
-  .cond-group    { grid-template-columns: 1fr 1fr; }
+  .expo-cond .expo-field { flex: 0 0 96px; }
+  .expo-cond .expo-field label { white-space: nowrap; }
+  .expo-cond .chk {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    font-size: 0.8rem;
+    padding: 9px 4px;
+    gap: 5px;
+    white-space: nowrap;
+  }
+
   .qualite-group { display: flex; gap: 16px; flex-wrap: nowrap; margin-top: 6px; }
   .qualite-group .chk { font-size: 0.82rem; white-space: nowrap; }
 
@@ -634,7 +668,7 @@
   <!-- Lieu -->
   <div class="card">
 
-    <div class="row2">
+    <div class="row-lieu">
       <div>
         <label for="loc_q">Ville</label>
         <div class="autocomplete-wrap">
@@ -646,27 +680,23 @@
         </div>
       </div>
       <div>
+        <label for="fpc">Code postal</label>
+        <input type="number" id="fpc" name="fpc" class="ro" placeholder="—" readonly tabindex="-1">
+      </div>
+      <div>
         <label for="floc">Adresse</label>
         <input type="text" id="floc" name="floc" class="ro" placeholder="—" readonly tabindex="-1">
       </div>
     </div>
 
-    <div class="row2">
-      <div>
-        <label for="fpc">Code postal</label>
-        <input type="number" id="fpc" name="fpc" class="ro" placeholder="—" readonly tabindex="-1">
-      </div>
-      <div>
+    <div class="expo-cond">
+      <div class="expo-field">
         <label for="hist_nb_expo">Nb exposants</label>
         <input type="number" id="hist_nb_expo" placeholder="0" min="0">
       </div>
-    </div>
-
-    <label style="margin-top:14px">Conditions</label>
-    <div class="cond-group">
       <label class="chk"><input type="checkbox" id="chk_pluie"> Pluie</label>
-      <label class="chk"><input type="checkbox" id="chk_tard"> Arrivée trop tard</label>
-      <label class="chk"><input type="checkbox" id="chk_duo"> Duo (même voiture)</label>
+      <label class="chk" title="Arrivée trop tard"><input type="checkbox" id="chk_tard"> Trop tard</label>
+      <label class="chk" title="Duo (même voiture)"><input type="checkbox" id="chk_duo"> Duo</label>
     </div>
 
     <label style="margin-top:14px">Endroit</label>
@@ -678,6 +708,16 @@
       <label class="chk"><input type="checkbox" id="chk_rues"> Rues</label>
       <label class="chk"><input type="checkbox" id="chk_salle"> Salle</label>
     </div>
+  </div>
+
+  <!-- Avis -->
+  <div class="card">
+    <div class="section-title">Avis</div>
+    <textarea id="hist_avis" placeholder="Notes de visite, conseils, observations…"></textarea>
+
+    <div class="section-title" style="margin-top:14px">Détail des achats</div>
+    <div id="achats-list"></div>
+    <button type="button" class="add-achat" id="addAchat">＋ Ajouter un objet</button>
   </div>
 
   <!-- Qualité -->
@@ -706,18 +746,6 @@
     <!-- champs cachés pour soumission -->
     <input type="hidden" id="hist_pml_dep" value="0">
     <input type="hidden" id="hist_fra_dep" value="0">
-  </div>
-
-  <!-- Avis -->
-  <div class="card">
-    <div class="section-title">Avis</div>
-    <textarea id="hist_avis" placeholder="Notes de visite, conseils, observations…"></textarea>
-
-    <details>
-      <summary>Détail des achats</summary>
-      <div id="achats-list"></div>
-      <button type="button" class="add-achat" id="addAchat">＋ Ajouter un objet</button>
-    </details>
   </div>
 
   <button type="submit" class="submit-btn" id="submitBtn">Enregistrer</button>
@@ -898,6 +926,9 @@ function setName(n) {
 function sumAchatsPrix() {
   let total = 0;
   achatsList.querySelectorAll('.achat-row').forEach(row => {
+    // Un objet dont l'avis est "MAISON" n'est pas compté dans la dépense.
+    const avis = row.querySelector('.achat-avis').value.trim().toUpperCase();
+    if (avis === 'MAISON') return;
     const v = parseInt(row.querySelector('.achat-prix').value) || 0;
     total += v;
   });
@@ -1238,7 +1269,9 @@ recentBtn.addEventListener('click', async () => {
 function margeVisite(detail) {
   let achat = 0, vente = 0, revendu = false;
   (detail || '').split('+').forEach(part => {
-    const [item, , vendu = ''] = part.split('|');
+    const [item, avis = '', vendu = ''] = part.split('|');
+    // Objet "MAISON" : exclu des calculs (ni achat, ni revendu).
+    if (avis.trim().toUpperCase() === 'MAISON') return;
     const m = item.match(/=(\d+)€\s*$/);
     if (m) achat += parseInt(m[1], 10);
     const v = parseInt(vendu, 10);
