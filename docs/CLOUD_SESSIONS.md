@@ -94,3 +94,48 @@ même temps**. C'est le seul couplage implicite du montage.
   (démarrage lent). Vérifier au premier démarrage (`check-tools`, chrono).
 - **Pas d'exécution d'app** : ni rendu UI ni geste ; uniquement analyze/test et
   scripts Python.
+
+## Mémo — cycle terminal ↔ cloud (démarche sûre)
+
+<!-- Ajouté 2026-09-28. Consigne l'enchaînement `--cloud` → relecture →
+     `--teleport`, durci par la leçon de l'incident du 27/09 (stash du teleport). -->
+
+Deux commandes, **sens opposés** :
+
+- `claude --cloud "<tâche>"` — terminal → cloud : **crée** une nouvelle session,
+  la VM **clone le remote GitHub** à la branche courante (PAS la copie locale).
+- `claude --teleport <session-id>` — cloud → terminal : **rapatrie** la branche
+  poussée par la session + l'historique de conversation, pour continuer/vérifier
+  en local (indispensable pour `flutter build`, que le cloud ne peut pas faire).
+
+### Trois règles qui rendent le cycle sûr
+
+1. **C'est le `push` qui porte, pas le `commit`.** `--cloud` clone le *remote* :
+   un commit non poussé est invisible pour la VM. Vérifier `git status` →
+   *up to date with origin* AVANT de lancer, ne pas supposer.
+2. **`--teleport` exige un working dir *propre* — au moment du teleport.** Sinon
+   il propose de **stash** : c'est exactement ce qui a fait tomber
+   `historibroc.db` le 27/09. Donc `git status` **vide** avant tout teleport
+   (committer ou stasher volontairement le travail local d'abord).
+3. **Laisser la session finir, puis relire.** Entre `--cloud` et `--teleport` :
+   suivre + relire le diff/les tests sur `claude.ai/code`, teleporter seulement
+   une fois la session terminée (sinon on rapatrie une branche incomplète).
+
+### Séquence de référence
+
+```bash
+cd <racine du repo>
+git switch -c ma-tache            # branche dédiée (propre ; évite de polluer main)
+git add -A && git commit -m "wip: point de départ"
+git push -u origin ma-tache       # ← étape critique : sans push, le cloud ne voit rien
+claude --cloud "Ma tâche..."      # noter l'ID de session affiché
+#   → suivi + relecture sur claude.ai/code, ON LAISSE FINIR
+git status                        # ← DOIT être vide avant teleport
+claude --teleport session_XXXX    # rapatrie la branche + l'historique
+```
+
+Notes : `--cloud` = **un seul repo** à la fois. `--teleport` doit se lancer
+depuis un checkout du **même** repo (pas un fork). Après teleport, le lien est
+coupé : la copie locale n'alimente plus la session cloud (pour re-piloter depuis
+le mobile, lancer `/remote-control`). Ne pas confondre `--teleport` (session
+cloud + branche) avec `--resume` (historique purement local).
