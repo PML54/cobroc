@@ -169,7 +169,9 @@ def generate_dart(db_path: Path) -> str:
             extras.append("stade: 1")
         if row["espace"]:
             extras.append("espace: 1")
-        if row["duo"]:
+        # duo : colonne ajoutée par _migrate_db() au démarrage du serveur —
+        # tolère une base pas encore migrée (colonne absente ⇒ 0)
+        if "duo" in row.keys() and row["duo"]:
             extras.append("duo: 1")
         extra_str = (", " + ", ".join(extras)) if extras else ""
 

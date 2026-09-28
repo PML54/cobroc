@@ -1,5 +1,5 @@
 # cobroc-server
-<!-- Dernière modification : 2026-09-27 -->
+<!-- Dernière modification : 2026-09-28 -->
 
 Serveur REST local pour la base **historibroc** — historique des visites de brocantes de PML et FRA.  
 Objectif principal : partager et modifier la base depuis n'importe quelle machine du réseau local.
@@ -103,7 +103,7 @@ requirements.txt                    # fastapi, uvicorn, anthropic, python-dotenv
 | `qualite_agreable` | INTEGER 0/1 | Qualité : agréable |
 | `qualite_non_signalee` | INTEGER 0/1 | Qualité : non signalée |
 | `qualite_a_faire_a_2` | INTEGER 0/1 | Qualité : à faire à 2 |
-| `duo` | INTEGER 0/1 | Trajet à 2 dans une seule voiture (marqueur pour futur calcul des frais d'essence) |
+| `duo` | INTEGER 0/1 | Visite faite à 2 dans une seule voiture (0 = Non par défaut, 1 = Oui) — fait constaté, distinct de `qualite_a_faire_a_2` (recommandation). Base du futur calcul des frais d'essence |
 
 ## Routes API
 
@@ -138,7 +138,9 @@ Formulaire « Nouvelle visite » servi sur `/` (redirige vers `/static/index.htm
 - **Icône 🕐** : charge `GET /historic?sort=date_desc&year=<annee>&limit=500` — toutes les visites de l'année sélectionnée, triées par date desc puis ville. Chaque ligne : date · visiteur · ville · lieu · nb exposants · étoiles · commentaire tronqué. Clic → mode édition (`PUT /historic/{id}`). C'est le **seul point d'entrée** pour modifier une visite.
 - **Formulaire** : une ligne Date · Heure · Ordre (stepper − n +) · Note (étoiles). Pas de titres de section.
 - **Visiteur** : bascule PML / FRA.
-- **Lieu** : Ville | Adresse sur une ligne, CP | Nb exposants sur la suivante. Puis **Conditions** (Pluie, Arrivée trop tard) et **Endroit** (Parking / Champ / Stade / Place / Rues, 3 colonnes).
+- **Lieu** : Ville · Code postal · Adresse sur une ligne. Puis **Nb exposants + Conditions** (Pluie / Trop tard / **Duo** « même voiture », cases à cocher) sur une ligne, et **Endroit** (Parking / Champ / Stade / Place / Rues / Salle) sur une ligne.
+- Ordre des rubriques : Avis → **Détail des achats** (toujours affiché) → Qualité → Dépenses.
+- **Règle MAISON** : un objet du détail dont l'avis vaut `MAISON` (insensible à la casse) n'est pas compté dans les calculs de dépense/marge (`sumAchatsPrix`, `margeVisite`, `somme_detail`).
 - **Endroit** : stocké dans `historic` (`endroit_*`), pas dans `lieux`.
 - **Lieu obligatoire** : le champ Ville est un **pur sélecteur** alimenté par `GET /lieux?ville=…`. Tant qu'aucun lieu n'est sélectionné (`selectedLieuId === null`), le bouton Enregistrer reste grisé. CP et Adresse sont en lecture seule, remplis depuis le lieu.
 - **Aucun résultat** : le dropdown affiche un lien « Créer le lieu → » vers `/static/lieux.html?ville=<VILLE>&new=1` (ouvre l'éditeur pré-rempli). Plus de modale de création dans `index.html`.
@@ -210,6 +212,9 @@ Points clés de `scripts/export_dart.py` :
   `parking`/`rues`/`stade`/`espace` via LEFT JOIN `lieux`) sont émis en **paramètres
   nommés optionnels**, et **seulement s'ils sont non-défaut** → les anciennes lignes
   restent inchangées, rétro-compatibles.
+- `duo` (visite faite à 2) est exporté de la même façon (`duo: 1` seulement si Oui).
+  Il est **transporté** dans `Historic` mais **pas encore affiché ni utilisé** côté Flutter.
+  L'export tolère une base non migrée (colonne `duo` absente ⇒ 0).
 - Ces champs sont **transportés** dans les objets `Historic` et **affichés** dans la
   vue d'une visite (`lib/histeric.dart`, badges conditionnels heure/pluie/endroit).
 - Valider le fichier généré : `cd .. && dart analyze lib/historibroc.dart`.

@@ -15,7 +15,7 @@ CREATE TABLE historic (
   validated        INTEGER NOT NULL DEFAULT 0,
   agent_notes      TEXT    NOT NULL DEFAULT '',
   created_at       TEXT    NOT NULL DEFAULT (datetime('now'))
-, ville_normalized TEXT, lieu_id INTEGER REFERENCES lieux(id), heure_arrivee TEXT NOT NULL DEFAULT '', pluie INTEGER NOT NULL DEFAULT 0, arrivee_tard INTEGER NOT NULL DEFAULT 0, ordre INTEGER NOT NULL DEFAULT 1, endroit_parking INTEGER NOT NULL DEFAULT 0, endroit_champ INTEGER NOT NULL DEFAULT 0, endroit_stade INTEGER NOT NULL DEFAULT 0, endroit_place INTEGER NOT NULL DEFAULT 0, endroit_rues INTEGER NOT NULL DEFAULT 0, endroit_salle INTEGER NOT NULL DEFAULT 0, qualite_agreable INTEGER NOT NULL DEFAULT 0, qualite_non_signalee INTEGER NOT NULL DEFAULT 0, qualite_a_faire_a_2 INTEGER NOT NULL DEFAULT 0);
+, ville_normalized TEXT, lieu_id INTEGER REFERENCES lieux(id), heure_arrivee TEXT NOT NULL DEFAULT '', pluie INTEGER NOT NULL DEFAULT 0, arrivee_tard INTEGER NOT NULL DEFAULT 0, ordre INTEGER NOT NULL DEFAULT 1, endroit_parking INTEGER NOT NULL DEFAULT 0, endroit_champ INTEGER NOT NULL DEFAULT 0, endroit_stade INTEGER NOT NULL DEFAULT 0, endroit_place INTEGER NOT NULL DEFAULT 0, endroit_rues INTEGER NOT NULL DEFAULT 0, endroit_salle INTEGER NOT NULL DEFAULT 0, qualite_agreable INTEGER NOT NULL DEFAULT 0, qualite_non_signalee INTEGER NOT NULL DEFAULT 0, qualite_a_faire_a_2 INTEGER NOT NULL DEFAULT 0, duo INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE sqlite_sequence(name,seq);
 CREATE INDEX idx_ville      ON historic(hist_ville);
 CREATE INDEX idx_date       ON historic(hist_date);
