@@ -19,11 +19,9 @@ d'un livrable concret. Menée depuis le Mac (session continuée depuis le cloud)
 (doublon exact, PML vs FRA même ville/date → False, normalisation ville Nîmes/NIMES,
 liste vide) + compléments (strip des 3 champs, casse visiteur, doublon non-premier,
 champs manquants). `validator.py` **non modifié**.
-- ⚠️ **Rustine assumée et documentée** dans le fichier : `os.environ.setdefault
-  ("ANTHROPIC_API_KEY", ...)` **avant** l'import, car `validator.py` construit le
-  client Anthropic au **niveau module** (`_client = Anthropic(...)`). Fragile
-  (dépendance à l'ordre d'import). Fix propre = **lazy init** du client → chantier
-  séparé, **non fait** (reste à faire).
+- La rustine initiale (`os.environ.setdefault("ANTHROPIC_API_KEY", ...)` avant
+  l'import, car `validator.py` construisait le client Anthropic au niveau module)
+  a été **retirée ensuite** grâce au lazy init → voir point 3.
 
 **2. Deux mémos durables dans `docs/CLOUD_SESSIONS.md`** :
 - Cycle terminal↔cloud : `--cloud` (crée, TTY requis) vs `--teleport` (rapatrie,
@@ -33,6 +31,16 @@ champs manquants). `validator.py` **non modifié**.
   push impossible sans `git remote add`. Installer l'App GitHub *sur le repo* **n'a
   pas suffi** (testé). Mode clone exigerait de connecter claude.ai **via l'App
   GitHub** (onboarding), pas `/web-setup`.
+
+**3. Lazy init du client Anthropic** (`server/agent/validator.py`). `_client =
+Anthropic(...)` au niveau module (eager) → remplacé par `_client = None` +
+`_get_client()` (construction à la demande, une seule fois) ; appel via
+`_get_client().messages.create(...)`. Effet : importer les fonctions pures
+n'exige plus `ANTHROPIC_API_KEY` (erreur clé différée au 1er appel réel
+d'inference), et la **rustine du test a été supprimée**. Vérifié : import sans
+clé OK, `_get_client()` sans clé lève `KeyError` à l'appel (voulu), test
+**11/11 sans clé**. Pas d'appel API réseau réel (hors périmètre). Pas de
+régression serveur (`server.py` appelle `validate_entry`, inchangé).
 
 ### 🧠 Leçons cloud (à coût ~nul cette fois)
 
@@ -44,11 +52,11 @@ champs manquants). `validator.py` **non modifié**.
 
 ### 🧾 Commits poussés sur `main`
 `a3aa61f` mémo cycle cloud · `fdcaece` tests `_is_true_duplicate` ·
-`67f0fa6` constat bundle · `<ce commit>` maj suivi.
+`67f0fa6` constat bundle · `908efea` maj suivi · `942c32f` lazy init validator ·
+`<ce commit>` maj suivi (lazy init en Fait).
 
 ### ⏭️ Reste à faire
 - **Rebuild app Flutter** (`flutter build ios`) — toujours en attente (données iPhone).
-- **Lazy init `validator.py`** — supprime la rustine du test (petit chantier ciblé).
 - **Mode clone cloud** (optionnel) — reconnecter GitHub via l'App dans les settings
   claude.ai si on veut réutiliser le cloud sérieusement.
 - **Promo crédits cloud** : 250 $ (Max) à réclamer avant le **7 oct.**, expire **4 nov.**
