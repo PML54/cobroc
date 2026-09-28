@@ -1,5 +1,5 @@
 // lib/historibroc.dart
-// Modified: 2609271953
+// Modified: 2609280425
 // Historic — liste des brocantes visitées
 // CHANGEMENTS: (1) Export automatique depuis SQLite — 2265 entrées validées
 
@@ -30,6 +30,7 @@ class Historic {
   int rues = 0;
   int stade = 0;
   int espace = 0;
+  int duo = 0;          // visite faite à 2, 0/1 (futur calcul frais d'essence)
 
   Historic(
       this.histName,
@@ -51,6 +52,7 @@ class Historic {
       this.rues = 0,
       this.stade = 0,
       this.espace = 0,
+      this.duo = 0,
       }) {
     BreakDate bri = BreakDate(histDate);
     histCheckDate = bri.checkDate;
