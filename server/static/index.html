@@ -685,9 +685,8 @@
 
     <div class="row-lieu">
       <div>
-        <label for="loc_q">Ville</label>
         <div class="autocomplete-wrap">
-          <input type="text" id="loc_q" name="loc_q" placeholder="Chercher un lieu…"
+          <input type="text" id="loc_q" name="loc_q" placeholder="Ville — chercher un lieu…"
                  autocomplete="new-password" autocorrect="off" autocapitalize="characters" spellcheck="false"
                  data-1p-ignore data-lpignore="true"
                  readonly onfocus="this.removeAttribute('readonly')">
@@ -695,12 +694,10 @@
         </div>
       </div>
       <div>
-        <label for="fpc">Code postal</label>
-        <input type="number" id="fpc" name="fpc" class="ro" placeholder="—" readonly tabindex="-1">
+        <input type="number" id="fpc" name="fpc" class="ro" placeholder="Code postal" readonly tabindex="-1">
       </div>
       <div>
-        <label for="floc">Adresse</label>
-        <input type="text" id="floc" name="floc" class="ro" placeholder="—" readonly tabindex="-1">
+        <input type="text" id="floc" name="floc" class="ro" placeholder="Adresse" readonly tabindex="-1">
       </div>
     </div>
 
@@ -714,7 +711,6 @@
       <label class="chk" title="Duo (même voiture)"><input type="checkbox" id="chk_duo"> Duo</label>
     </div>
 
-    <label style="margin-top:14px">Endroit</label>
     <div class="endroit-group">
       <label class="chk"><input type="checkbox" id="chk_parking"> Parking</label>
       <label class="chk"><input type="checkbox" id="chk_champ"> Champ</label>
@@ -727,8 +723,7 @@
 
   <!-- Avis -->
   <div class="card">
-    <div class="section-title">Avis</div>
-    <textarea id="hist_avis" placeholder="Notes de visite, conseils, observations…"></textarea>
+    <textarea id="hist_avis" placeholder="Avis — notes de visite, conseils, observations…"></textarea>
 
     <div class="section-title" style="margin-top:14px">Détail des achats</div>
     <div id="achats-list"></div>
