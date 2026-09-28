@@ -1,5 +1,5 @@
 # cobroc-server
-<!-- Dernière modification : 2026-09-27 -->
+<!-- Dernière modification : 2026-09-28 -->
 
 Serveur REST local pour la base **historibroc** — historique des visites de brocantes de PML et FRA.  
 Objectif principal : partager et modifier la base depuis n'importe quelle machine du réseau local.
@@ -103,6 +103,7 @@ requirements.txt                    # fastapi, uvicorn, anthropic, python-dotenv
 | `qualite_agreable` | INTEGER 0/1 | Qualité : agréable |
 | `qualite_non_signalee` | INTEGER 0/1 | Qualité : non signalée |
 | `qualite_a_faire_a_2` | INTEGER 0/1 | Qualité : à faire à 2 |
+| `duo` | INTEGER 0/1 | Visite **faite** à 2 (0 = Non par défaut, 1 = Oui) — fait constaté, distinct de `qualite_a_faire_a_2` (recommandation). Prévu pour le calcul des frais d'essence |
 
 ## Routes API
 
@@ -136,7 +137,7 @@ Formulaire « Nouvelle visite » servi sur `/` (redirige vers `/static/index.htm
 - **En-tête** : sélecteur d'année (2020 → année courante) + bouton 📍 (page Lieux) + bouton 🕐. Pas de titre de page.
 - **Icône 🕐** : charge `GET /historic?sort=date_desc&year=<annee>&limit=500` — toutes les visites de l'année sélectionnée, triées par date desc puis ville. Chaque ligne : date · visiteur · ville · lieu · nb exposants · étoiles · commentaire tronqué. Clic → mode édition (`PUT /historic/{id}`). C'est le **seul point d'entrée** pour modifier une visite.
 - **Formulaire** : une ligne Date · Heure · Ordre (stepper − n +) · Note (étoiles). Pas de titres de section.
-- **Visiteur** : bascule PML / FRA.
+- **Visiteur** : bascule PML / FRA, puis bascule **Duo** Non / Oui (défaut Non, remise à Non au reset).
 - **Lieu** : Ville | Adresse sur une ligne, CP | Nb exposants sur la suivante. Puis **Conditions** (Pluie, Arrivée trop tard) et **Endroit** (Parking / Champ / Stade / Place / Rues, 3 colonnes).
 - **Endroit** : stocké dans `historic` (`endroit_*`), pas dans `lieux`.
 - **Lieu obligatoire** : le champ Ville est un **pur sélecteur** alimenté par `GET /lieux?ville=…`. Tant qu'aucun lieu n'est sélectionné (`selectedLieuId === null`), le bouton Enregistrer reste grisé. CP et Adresse sont en lecture seule, remplis depuis le lieu.

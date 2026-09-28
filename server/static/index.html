@@ -107,6 +107,17 @@
     color: white;
   }
 
+  /* Duo (visite faite à 2) : bascule Non / Oui, plus compacte que Visiteur */
+  .duo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .duo-row > span { font-weight: 600; color: var(--muted); min-width: 3em; }
+  .duo-row .toggle-group { flex: 1; }
+  .duo-row .toggle-btn { padding: 8px; font-size: 0.95rem; }
+
   /* Form elements */
   label {
     display: block;
@@ -596,6 +607,13 @@
       <button type="button" class="toggle-btn" id="btn-pml" onclick="setName('PML')">PML</button>
       <button type="button" class="toggle-btn" id="btn-fra" onclick="setName('FRA')">FRA</button>
     </div>
+    <div class="duo-row">
+      <span title="Visite faite à 2">Duo</span>
+      <div class="toggle-group">
+        <button type="button" class="toggle-btn active" id="btn-duo-non" onclick="setDuo(0)">Non</button>
+        <button type="button" class="toggle-btn" id="btn-duo-oui" onclick="setDuo(1)">Oui</button>
+      </div>
+    </div>
   </div>
 
   <!-- Date + Note + Heure + Ordre -->
@@ -726,6 +744,7 @@
 <script>
 // ── State ──────────────────────────────────────────────────────────────────
 let selectedName = null;   // 'PML' | 'FRA'
+let selectedDuo  = 0;      // 0 = Non (défaut), 1 = Oui (visite faite à 2)
 let selectedGood = 0;
 let selectedOrdre = 1;
 let selectedLieuId = null; // id du lieu sélectionné dans le dropdown, null si nouveau
@@ -794,6 +813,7 @@ async function loadEntry(id, navIndex = -1) {
     document.getElementById('chk_agreable').checked     = d.qualite_agreable     === 1;
     document.getElementById('chk_non_signalee').checked = d.qualite_non_signalee === 1;
     document.getElementById('chk_a_faire_a_2').checked  = d.qualite_a_faire_a_2  === 1;
+    setDuo(d.duo === 1 ? 1 : 0);
 
     // Lieu : repris directement depuis l'entrée (pas d'appel /lieux supplémentaire)
     selectedLieuId = d.lieu_id ?? null;
@@ -890,6 +910,13 @@ function setName(n) {
   document.getElementById('dep-visitor-label').textContent = n || '–';
   updateSubmitBtn();
   autoFillDep();
+}
+
+// ── Duo (visite faite à 2) ────────────────────────────────────────────────
+function setDuo(v) {
+  selectedDuo = v === 1 ? 1 : 0;
+  document.getElementById('btn-duo-non').classList.toggle('active', selectedDuo === 0);
+  document.getElementById('btn-duo-oui').classList.toggle('active', selectedDuo === 1);
 }
 
 // ── Dépenses : auto-calcul depuis le détail des achats ─────────────────────
@@ -1159,6 +1186,7 @@ document.getElementById('mainForm').addEventListener('submit', async e => {
     qualite_agreable:      document.getElementById('chk_agreable').checked     ? 1 : 0,
     qualite_non_signalee:  document.getElementById('chk_non_signalee').checked ? 1 : 0,
     qualite_a_faire_a_2:   document.getElementById('chk_a_faire_a_2').checked  ? 1 : 0,
+    duo:                   selectedDuo,
   };
 
   const isEdit = editingId !== null;
@@ -1346,6 +1374,7 @@ function resetForm() {
   document.getElementById('chk_agreable').checked     = false;
   document.getElementById('chk_non_signalee').checked = false;
   document.getElementById('chk_a_faire_a_2').checked  = false;
+  setDuo(0);
   setOrdre(1);
   resetAchats();
   document.getElementById('hist_pml_dep').value = 0;

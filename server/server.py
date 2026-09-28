@@ -91,6 +91,8 @@ def _migrate_db():
         ("qualite_agreable",   "ALTER TABLE historic ADD COLUMN qualite_agreable    INTEGER NOT NULL DEFAULT 0"),
         ("qualite_non_signalee","ALTER TABLE historic ADD COLUMN qualite_non_signalee INTEGER NOT NULL DEFAULT 0"),
         ("qualite_a_faire_a_2","ALTER TABLE historic ADD COLUMN qualite_a_faire_a_2 INTEGER NOT NULL DEFAULT 0"),
+        # Visite faite à 2 (0 = Non, 1 = Oui) — base du futur calcul des frais d'essence
+        ("duo",                "ALTER TABLE historic ADD COLUMN duo                 INTEGER NOT NULL DEFAULT 0"),
     ]
     with _db() as con:
         existing = {row[1] for row in con.execute("PRAGMA table_info(historic)").fetchall()}
@@ -162,6 +164,7 @@ class HistoricIn(BaseModel):
     qualite_agreable:      int = Field(0, ge=0, le=1)
     qualite_non_signalee:  int = Field(0, ge=0, le=1)
     qualite_a_faire_a_2:   int = Field(0, ge=0, le=1)
+    duo:                   int = Field(0, ge=0, le=1)
 
 
 class HistoricOut(BaseModel):
@@ -195,6 +198,7 @@ class HistoricOut(BaseModel):
     qualite_agreable:      int = 0
     qualite_non_signalee:  int = 0
     qualite_a_faire_a_2:   int = 0
+    duo:                   int = 0
 
 
 # ── Routes ──────────────────────────────────────────────────────────────────────
@@ -291,14 +295,14 @@ def create_historic(entry: HistoricIn):
            hist_maison_dep, hist_avis, hist_detail, validated, agent_notes,
            ville_normalized, lieu_id, heure_arrivee, pluie, arrivee_tard,
            ordre, endroit_parking, endroit_champ, endroit_stade, endroit_place, endroit_rues, endroit_salle,
-           qualite_agreable, qualite_non_signalee, qualite_a_faire_a_2)
+           qualite_agreable, qualite_non_signalee, qualite_a_faire_a_2, duo)
         VALUES
           (:hist_name, :hist_date, :hist_good, :hist_ville, :hist_code_postal,
            :hist_adresse, :hist_nb_expo, :hist_pml_dep, :hist_fra_dep,
            :hist_maison_dep, :hist_avis, :hist_detail, :validated, :agent_notes,
            :ville_normalized, :lieu_id, :heure_arrivee, :pluie, :arrivee_tard,
            :ordre, :endroit_parking, :endroit_champ, :endroit_stade, :endroit_place, :endroit_rues, :endroit_salle,
-           :qualite_agreable, :qualite_non_signalee, :qualite_a_faire_a_2)
+           :qualite_agreable, :qualite_non_signalee, :qualite_a_faire_a_2, :duo)
     """
     data["validated"]        = validated
     data["agent_notes"]      = agent_notes
@@ -358,7 +362,7 @@ def update_historic(entry_id: int, entry: HistoricIn):
           endroit_stade=:endroit_stade, endroit_place=:endroit_place, endroit_rues=:endroit_rues,
           endroit_salle=:endroit_salle,
           qualite_agreable=:qualite_agreable, qualite_non_signalee=:qualite_non_signalee,
-          qualite_a_faire_a_2=:qualite_a_faire_a_2
+          qualite_a_faire_a_2=:qualite_a_faire_a_2, duo=:duo
         WHERE id=:id
     """
     data["validated"]        = validated
