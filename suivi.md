@@ -51,6 +51,27 @@ dans `server/tests/` est testé automatiquement.
 - Docs : sections **PR/CI** et **ID session ≠ SHA commit** ajoutées à
   `docs/CLOUD_SESSIONS.md`.
 
+**5. Marqueur « duo » sur une visite** (`feat 774b74b`). Nouveau flag booléen
+`duo` par visite = « on y est allés à 2 dans la même voiture » — **marqueur seul**,
+porté par la ligne saisie, en vue d'un **futur calcul des frais d'essence** (une
+seule voiture → essence comptée une fois). Suit le pattern des flags existants
+(`pluie`, `endroit_*`, `qualite_*`). Chaîne complète :
+- `server.py` : migration idempotente `duo INTEGER DEFAULT 0` + `HistoricIn`/
+  `HistoricOut` + colonnes INSERT/UPDATE.
+- `static/index.html` : case **« Duo (même voiture) »** dans *Conditions* +
+  chargement en édition + envoi + reset.
+- `scripts/export_dart.py` : `duo` dans la classe générée + constructeur, **émis
+  seulement si =1** → lignes existantes inchangées (rétro-compatible).
+- `lib/historibroc.dart` : champ `int duo` + paramètre nommé (synchro template).
+- `server/CLAUDE.md` : colonne `duo` documentée.
+- Vérifs : `flutter analyze` propre, `py_compile` OK, **test bout-en-bout sur une
+  copie** de la base (migration → visite `duo=1` → export → 1 seule ligne `duo: 1`,
+  diff prouvant que les 2266 lignes de données ne bougent pas). Base versionnée
+  **non touchée**.
+- ⚠️ **Redémarrer le serveur** (migration au startup) avant toute saisie, sinon
+  `no column named duo`. **Calcul essence = étape 2**, non faite (à définir :
+  distance, prix/litre, conso).
+
 ### 🧠 Leçons cloud (à coût ~nul cette fois)
 
 - Un commit **non poussé** dans une VM cloud éphémère est **perdu** quand la session
