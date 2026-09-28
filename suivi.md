@@ -42,6 +42,15 @@ clé OK, `_get_client()` sans clé lève `KeyError` à l'appel (voulu), test
 **11/11 sans clé**. Pas d'appel API réseau réel (hors périmètre). Pas de
 régression serveur (`server.py` appelle `validate_entry`, inchangé).
 
+**4. CI minimale GitHub Actions** (`.github/workflows/ci.yml`). Lance tous les
+`server/tests/test_*.py` à chaque push/PR touchant `server/`. **Sans build d'app,
+sans Flutter, sans toucher brocabrac** (conforme au gel légal) et **sans secret**
+(le lazy init rend l'import keyless → pas d'`ANTHROPIC_API_KEY`). Vérifié en réel :
+run vert en 12 s, 11/11 tests exécutés. Extensible : tout futur `test_*.py` ajouté
+dans `server/tests/` est testé automatiquement.
+- Docs : sections **PR/CI** et **ID session ≠ SHA commit** ajoutées à
+  `docs/CLOUD_SESSIONS.md`.
+
 ### 🧠 Leçons cloud (à coût ~nul cette fois)
 
 - Un commit **non poussé** dans une VM cloud éphémère est **perdu** quand la session
@@ -53,7 +62,8 @@ régression serveur (`server.py` appelle `validate_entry`, inchangé).
 ### 🧾 Commits poussés sur `main`
 `a3aa61f` mémo cycle cloud · `fdcaece` tests `_is_true_duplicate` ·
 `67f0fa6` constat bundle · `908efea` maj suivi · `942c32f` lazy init validator ·
-`<ce commit>` maj suivi (lazy init en Fait).
+`4883292` maj suivi (lazy init) · `493acc9` doc ID session vs SHA ·
+`16058b3` doc PR/CI · `46db310` ci.yml (CI minimale) · `<ce commit>` maj suivi (CI en Fait).
 
 ### ⏭️ Reste à faire
 - **Rebuild app Flutter** (`flutter build ios`) — toujours en attente (données iPhone).
