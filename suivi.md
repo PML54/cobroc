@@ -72,6 +72,25 @@ seule voiture → essence comptée une fois). Suit le pattern des flags existant
   `no column named duo`. **Calcul essence = étape 2**, non faite (à définir :
   distance, prix/litre, conso).
 
+**6. Refonte de la saisie web** (`feat 8f08933`, `static/index.html`).
+Mise en page compactée + réordonnancement + règle métier :
+- **Ville · Code postal · Adresse** sur une ligne ; **Nb exposants + conditions**
+  (Pluie / Trop tard / Duo) sur une ligne ; **Endroit** (6 cases) sur une ligne.
+- **Détail des achats** toujours affiché (section fixe, plus de `<details>`).
+- Rubriques **Qualité** et **Dépenses** déplacées **après** le Détail des achats.
+- **Règle « MAISON »** : un objet du détail dont l'avis = `MAISON` (insensible à
+  la casse) n'est **plus compté** dans les calculs de dépense/marge. Appliquée à
+  `sumAchatsPrix()` + `margeVisite()` (JS) et `somme_detail()` (`recompute_depenses.py`).
+  App Flutter non impactée (elle lit les dépenses stockées). Vérifié en page
+  (`margeVisite` `[10,3,0]`, `sumAchatsPrix`=10) + 6/6 cas serveur.
+- IDs de champs inchangés → aucune régression JS.
+
+**7. Snapshot base** (`data 35a3b41`). Éditions de visites faites **via le
+formulaire web** pendant la session (pas par l'assistant) : id 2288 `nb_expo`
+0→150 + re-validation, id 2293/2296 notes agent régénérées. 2265 entrées, aucune
+perte. Committée (règle « committer la base régulièrement »). ⚠️ Rappel : la base
+change dès qu'on saisit sur le LAN — vérifier `git status` avant/après.
+
 ### 🧠 Leçons cloud (à coût ~nul cette fois)
 
 - Un commit **non poussé** dans une VM cloud éphémère est **perdu** quand la session
