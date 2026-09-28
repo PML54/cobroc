@@ -167,3 +167,20 @@ cloud, `git remote add origin <url>` + `git push -u origin <branche>` — ou
 récupérer le travail autrement — sinon perte. Et : pour cobroc, le cloud reste un
 **mauvais outil** (gel légal du scraping, Flutter absent de la VM, friction
 bundle) → privilégier le travail **local**.
+
+### ID de session ≠ SHA de commit (aucun rapport)
+
+Deux identifiants distincts, à ne pas confondre :
+
+- **ID de session cloud** : `session_01B25wsxe18Ds4HHgHvFMsgh` (ou `cse_...`).
+  Attribué par l'infra Anthropic au `claude --cloud`. Sert à **retrouver/piloter**
+  la session : `claude --teleport <id>`, `claude -p "..." --cloud <id>`, URL
+  `claude.ai/code/<id>`.
+- **SHA de commit git** : `942c32f`. Empreinte git d'un **état du code**.
+
+L'ID de session n'encode PAS le commit, et inversement. Lien réel mais **indirect** :
+une session `--cloud` *démarre* de l'état de la branche courante sur le remote
+(ou du bundle) — donc d'un certain commit (son SHA = dernier poussé) — puis crée
+ses propres commits (nouveaux SHA). Aucun de ces SHA n'a de rapport avec l'ID de
+session. Retrouver une session → **ID de session** ; savoir de quel code elle part
+→ **SHA du dernier commit poussé** de la branche.
