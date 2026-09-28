@@ -1298,14 +1298,15 @@ function margeVisite(detail) {
   return { achat, vente, marge: vente - achat, revendu };
 }
 
-// Bilan par visiteur : Dépenses (champ dépense du visiteur) + Recettes (revendu du détail).
-// La règle MAISON s'applique aux recettes via margeVisite (objet "MAISON" exclu).
+// Bilan par visiteur : Dépenses + Recettes calculées depuis le détail des achats.
+// La règle MAISON s'applique aux deux via margeVisite (objet "MAISON" exclu).
 function renderBilan(data) {
   const b = { PML: { dep: 0, rec: 0 }, FRA: { dep: 0, rec: 0 } };
   data.forEach(item => {
     const who = item.hist_name === 'FRA' ? 'FRA' : 'PML';
-    b[who].dep += who === 'PML' ? (item.hist_pml_dep || 0) : (item.hist_fra_dep || 0);
-    b[who].rec += margeVisite(item.hist_detail).vente;
+    const { achat, vente } = margeVisite(item.hist_detail);
+    b[who].dep += achat;
+    b[who].rec += vente;
   });
   const ligne = (nom, o) =>
     `<span><span class="who">${nom}</span>Dép. <span class="dep">${o.dep}€</span> · Rec. <span class="rec">${o.rec}€</span></span>`;
