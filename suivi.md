@@ -1,9 +1,57 @@
 # Suivi des sessions avec Claude
-<!-- Dernière modification : 2026-09-27 -->
+<!-- Dernière modification : 2026-09-28 -->
 
 > Ce fichier est le point d'entrée pour reprendre le travail avec Claude.
 > À lire en début de session, à mettre à jour en fin de session.
 > Convention : section `## Session AAAA-MM-JJ` par session, la plus récente en tête.
+
+---
+
+## Session 2026-09-28
+
+Session de **familiarisation avec Claude Code on the web** (cloud sessions), doublée
+d'un livrable concret. Menée depuis le Mac (session continuée depuis le cloud).
+
+### ✅ Fait
+
+**1. Tests unitaires de `_is_true_duplicate`** (`server/tests/test_is_true_duplicate.py`).
+11 cas, **11/11 passés** avec le venv local (`server/.venv`). Couvre les 4 requis
+(doublon exact, PML vs FRA même ville/date → False, normalisation ville Nîmes/NIMES,
+liste vide) + compléments (strip des 3 champs, casse visiteur, doublon non-premier,
+champs manquants). `validator.py` **non modifié**.
+- ⚠️ **Rustine assumée et documentée** dans le fichier : `os.environ.setdefault
+  ("ANTHROPIC_API_KEY", ...)` **avant** l'import, car `validator.py` construit le
+  client Anthropic au **niveau module** (`_client = Anthropic(...)`). Fragile
+  (dépendance à l'ordre d'import). Fix propre = **lazy init** du client → chantier
+  séparé, **non fait** (reste à faire).
+
+**2. Deux mémos durables dans `docs/CLOUD_SESSIONS.md`** :
+- Cycle terminal↔cloud : `--cloud` (crée, TTY requis) vs `--teleport` (rapatrie,
+  arbre propre requis) ; règle « push ≠ commit » ; séquence de référence.
+- **Constat empirique** : `claude --cloud` depuis ce repo part en **bundle**
+  (`git clone /home/user/.seed.bundle`), **pas** en clone réseau → `origin` absent,
+  push impossible sans `git remote add`. Installer l'App GitHub *sur le repo* **n'a
+  pas suffi** (testé). Mode clone exigerait de connecter claude.ai **via l'App
+  GitHub** (onboarding), pas `/web-setup`.
+
+### 🧠 Leçons cloud (à coût ~nul cette fois)
+
+- Un commit **non poussé** dans une VM cloud éphémère est **perdu** quand la session
+  s'éteint (revécu : la 1ʳᵉ session `_is_true_duplicate` a été perdue, test recréé
+  en local). Confirme la leçon du 27/09.
+- Le **bundling** est une décision **côté client** (avant démarrage VM), **sans
+  rapport** avec la policy réseau Trusted (qui ne bloque que `brocabrac.fr`).
+
+### 🧾 Commits poussés sur `main`
+`a3aa61f` mémo cycle cloud · `fdcaece` tests `_is_true_duplicate` ·
+`67f0fa6` constat bundle · `<ce commit>` maj suivi.
+
+### ⏭️ Reste à faire
+- **Rebuild app Flutter** (`flutter build ios`) — toujours en attente (données iPhone).
+- **Lazy init `validator.py`** — supprime la rustine du test (petit chantier ciblé).
+- **Mode clone cloud** (optionnel) — reconnecter GitHub via l'App dans les settings
+  claude.ai si on veut réutiliser le cloud sérieusement.
+- **Promo crédits cloud** : 250 $ (Max) à réclamer avant le **7 oct.**, expire **4 nov.**
 
 ---
 
